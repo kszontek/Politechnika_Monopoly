@@ -2,21 +2,188 @@
 <html lang="pl"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{fragments/layout :: head('Strona glowna')}"></head>
-<body>
+<head th:replace="~{fragments/layout :: head-home('Strona glowna')}"></head>
+<body class="home-page">
 <header th:replace="~{fragments/layout :: navbar}"></header>
 <main id="main">
-    <div class="page-header">
-        <h1>Politechnika Monopoly</h1>
-        <p class="lead">Satyryczna gra planszowa osadzona na kampusie PB.</p>
+
+    <div th:if="${param.wylogowano}"
+         class="alert alert-success"
+         role="status"
+         style="max-width:1060px;margin:1rem auto 0;">
+        Zostałeś wylogowany.
     </div>
-    <div class="form-card" style="max-width:520px;">
-        <p>Dolacz do gry albo zaloguj sie na swoje konto.</p>
-        <div style="display:flex;gap:.75rem;margin-top:1rem;">
-            <a sec:authorize="!isAuthenticated()" th:href="@{/login}" class="btn">Zaloguj</a>
-            <span sec:authorize="isAuthenticated()">Jestes zalogowany.</span>
+
+    <section class="hero-section">
+        <div class="hero-grid">
+            <div class="hero-copy">
+                <span class="hero-overline">Kampus PB Online · </span>
+                <h1>Zbuduj monopol.<br><span class="hl">Zdominuj PB.</span></h1>
+                <p>Symulator ekonomiczny Politechniki Białostockiej. Przejmuj wydziały,
+                   wspinaj się w rankingu ELO i pokaż, kto naprawdę rządzi kampusem.</p>
+                <div class="hero-actions">
+                    <a sec:authorize="isAuthenticated()" th:href="@{/dashboard}" class="btn btn-large">
+                        <i class="fa-solid fa-user"></i> Mój profil
+                    </a>
+                    <a sec:authorize="!isAuthenticated()" th:href="@{/register}" class="btn btn-large">
+                        <i class="fa-solid fa-user-plus"></i> Dołącz do gry
+                    </a>
+                    <a href="#ranking" class="btn btn-secondary btn-large">
+                        <i class="fa-solid fa-trophy"></i> Zobacz ranking
+                    </a>
+                </div>
+                <div class="hero-divider">
+                    <div class="hero-stat">
+                        <span class="hero-stat-val">2–4</span>
+                        <span class="hero-stat-label">graczy</span>
+                    </div>
+                    <div class="hero-divider-sep"></div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-val">40</span>
+                        <span class="hero-stat-label">pól na planszy</span>
+                    </div>
+                    <div class="hero-divider-sep"></div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-val">~30</span>
+                        <span class="hero-stat-label">minut gry</span>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="live-widget" aria-label="Ranking na żywo">
+                <div class="lw-header">
+                    <span class="lw-title"><i class="fa-solid fa-ranking-star"></i> Czołówka</span>
+                    <span class="lw-live">Na żywo</span>
+                </div>
+                <div class="lw-sub">Najlepsi gracze sezonu</div>
+                <div class="lw-rows">
+                    <div class="lw-row" th:each="r : ${ranking}" th:if="${r.pozycja() <= 4}">
+                        <div class="lw-left">
+                            <span class="lw-rank"
+                                  th:classappend="${r.pozycja()==1?'r1':(r.pozycja()==2?'r2':(r.pozycja()==3?'r3':''))}"
+                                  th:text="${r.pozycja()}">1</span>
+                            <span th:text="${r.login()}">gracz</span>
+                        </div>
+                        <span class="lw-elo" th:text="${r.eloPoints()} + ' ELO'">1000 ELO</span>
+                    </div>
+                    <div class="lw-empty" th:if="${ranking.isEmpty()}">
+                        Brak graczy — bądź pierwszy!
+                    </div>
+                </div>
+                <div class="lw-foot">
+                    <a sec:authorize="!isAuthenticated()" th:href="@{/register}" class="btn">
+                        <i class="fa-solid fa-bolt"></i> Wskocz do rankingu
+                    </a>
+                    <a sec:authorize="isAuthenticated()" th:href="@{/dashboard}" class="btn">
+                        <i class="fa-solid fa-chart-line"></i> Moje statystyki
+                    </a>
+                </div>
+            </aside>
         </div>
-    </div>
+    </section>
+
+    <section id="about" class="section">
+        <div class="section-inner">
+            <p class="section-label">Rozgrywka</p>
+            <h2 class="section-title">Dlaczego warto <span class="text-gradient">zagrać?</span></h2>
+            <p class="section-sub">Rozgrywka zaprojektowana pod życie na uczelni — szybkie sesje i bezlitosny Dziekanat.</p>
+            <div class="features-grid">
+                <div class="feat-card">
+                    <div class="feat-icon" style="background:rgba(0,166,81,0.12);color:var(--pb-green);"><i class="fa-solid fa-bolt"></i></div>
+                    <h3>Błyskawiczne sesje</h3>
+                    <p>Jeden mecz trwa 15–30 minut. Idealne na przerwę między wykładami w labach WI.</p>
+                </div>
+                <div class="feat-card">
+                    <div class="feat-icon" style="background:rgba(106,27,154,0.12);color:var(--pb-purple);"><i class="fa-solid fa-trophy"></i></div>
+                    <h3>System ELO</h3>
+                    <p>Liczy się zarządzanie kapitałem, nie tylko rzut kostką. Wygrywaj i pnij się w rankingu.</p>
+                </div>
+                <div class="feat-card">
+                    <div class="feat-icon" style="background:rgba(59,130,246,0.12);color:var(--bl);"><i class="fa-solid fa-building-columns"></i></div>
+                    <h3>Klimat Politechniki</h3>
+                    <p>Kupuj laboratoria, wysyłaj rywali na warunek i unikaj Dziekanatu. Cały kampus na planszy.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="ranking" class="section">
+        <div class="section-inner">
+            <p class="section-label">Tabela liderów</p>
+            <h2 class="section-title">Ranking <span class="text-gradient">graczy</span></h2>
+            <p class="section-sub">Studenci, którzy przetrwali sesję i wspinają się na szczyt.</p>
+            <div class="ranking-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Gracz</th>
+                            <th>Poziom</th>
+                            <th>ELO</th>
+                            <th>Wygrane</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="r : ${ranking}">
+                            <td>
+                                <span class="rank-pos"
+                                      th:classappend="${r.pozycja()==1?'gold':(r.pozycja()==2?'silver':(r.pozycja()==3?'bronze':''))}"
+                                      th:text="${r.pozycja()}">1</span>
+                            </td>
+                            <td style="font-weight:600;" th:text="${r.login()}">gracz</td>
+                            <td style="color:var(--tm);" th:text="'Lvl ' + ${r.poziom()}">Lvl 1</td>
+                            <td>
+                                <span style="font-family:var(--font-display);font-weight:800;" th:text="${r.eloPoints()}">1000</span>
+                                <span style="color:var(--tm);font-size:.78rem;"> ELO</span>
+                            </td>
+                            <td th:text="${r.wygranePartie()}">0</td>
+                            <td>
+                                <span class="badge badge-ok" th:if="${r.pozycja()<=3}">Top 3</span>
+                                <span class="badge badge-dim" th:unless="${r.pozycja()<=3}">Aktywny</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${ranking.isEmpty()}">
+                            <td colspan="6" class="muted" style="text-align:center;padding:2.5rem;">
+                                Brak graczy. <a th:href="@{/register}">Bądź pierwszy!</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="register" class="cta-section">
+        <div class="cta-inner">
+            <div class="cta-left">
+                <p class="section-label">Rejestracja</p>
+                <h2 class="section-title">Załóż konto<br>i zacznij grać</h2>
+                <p>Zarejestruj się, stwórz profil gracza i rywalizuj o czoło rankingu ELO.</p>
+                <ul class="check-list">
+                    <li>Profil gracza z poziomem i statystykami</li>
+                    <li>Ranking ELO wszystkich graczy kampusu</li>
+                    <li>Panel zarządzania użytkownikami dla administratora</li>
+                </ul>
+            </div>
+            <div class="cta-box">
+                <h3>Dołącz do gry</h3>
+                <p>Masz już konto? Zaloguj się poniżej.</p>
+                <div class="cta-box-actions">
+                    <a sec:authorize="!isAuthenticated()" th:href="@{/register}" class="btn">
+                        <i class="fa-solid fa-user-plus"></i> Zarejestruj się
+                    </a>
+                    <a sec:authorize="!isAuthenticated()" th:href="@{/login}" class="btn btn-secondary">
+                        Mam już konto
+                    </a>
+                    <a sec:authorize="isAuthenticated()" th:href="@{/dashboard}" class="btn">
+                        <i class="fa-solid fa-user"></i> Mój profil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <script th:src="@{/js/app.js}"></script>
