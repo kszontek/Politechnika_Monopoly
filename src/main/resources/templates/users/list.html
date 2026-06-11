@@ -9,7 +9,7 @@
 
     <div class="page-header">
         <h1>Zarządzanie użytkownikami</h1>
-        <p class="lead">Przeglądaj graczy, zmieniaj rangi i usuwaj konta.</p>
+        <p class="lead">Dodawaj, edytuj, zmieniaj rangi i usuwaj graczy kampusu.</p>
     </div>
 
     <div th:if="${message}" class="alert alert-success">
@@ -17,8 +17,9 @@
     </div>
 
     <div class="glass-panel" style="overflow:hidden;">
-        <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--b);">
+        <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
             <h2 style="font-size:1.15rem;margin:0;">Użytkownicy <span style="color:var(--tm);font-weight:600;">(<span th:text="${users.size()}">0</span>)</span></h2>
+            <a th:href="@{/users/new}" class="btn"><i class="fa-solid fa-user-plus"></i> Dodaj użytkownika</a>
         </div>
 
         <div style="overflow-x:auto;">
@@ -48,6 +49,9 @@
                         <td style="font-family:var(--font-display);font-weight:700;color:var(--pb-green);" th:text="${u.profile != null ? u.profile.eloPoints : '—'}">—</td>
                         <td>
                             <div style="display:flex;gap:.4rem;justify-content:flex-end;flex-wrap:wrap;">
+                                <a th:href="@{/users/{id}/edit(id=${u.id})}" class="btn btn-secondary btn-sm">
+                                    <i class="fa-solid fa-pen"></i> Edytuj
+                                </a>
                                 <form th:action="@{/users/{id}/promote(id=${u.id})}" method="post" class="inline-form">
                                     <button type="submit" class="btn btn-sm" th:disabled="${u.role.name()=='ADMIN'}">
                                         <i class="fa-solid fa-arrow-up"></i> Awansuj
@@ -64,7 +68,7 @@
                     </tr>
                     <tr th:if="${users.isEmpty()}">
                         <td colspan="7" class="muted" style="text-align:center;padding:2.5rem;">
-                            Brak użytkowników.
+                            Brak użytkowników. <a th:href="@{/users/new}">Dodaj pierwszego!</a>
                         </td>
                     </tr>
                 </tbody>
