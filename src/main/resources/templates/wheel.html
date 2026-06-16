@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Kolo Fortuny')}"></head>
+<body class="light-page">
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main id="main">
+    <div class="page-header">
+        <span class="section-kicker"><i class="fa-solid fa-dharmachakra"></i> Codzienny bonus</span>
+        <h1>Kolo Fortuny Stypendialnego</h1>
+        <p class="lead">Zakrec raz dziennie — karty trafiaja do nastepnej gry, skrzynki od razu do zapasu.</p>
+    </div>
+
+    <div class="panel wheel-panel wheel-page-panel">
+        <div class="wheel-wrap">
+            <div class="wheel-pointer" aria-hidden="true"></div>
+            <canvas id="wheel" width="520" height="520" role="img"
+                    aria-label="Kolo Fortuny z nagrodami do wylosowania"></canvas>
+        </div>
+
+        <div class="reward-banner" id="reward" aria-live="polite"></div>
+
+        <div class="wheel-actions">
+            <button id="spinBtn" class="btn" type="button">
+                <i class="fa-solid fa-dharmachakra"></i> Zakrec kolem
+            </button>
+            <p class="muted wheel-spin-info" id="spinInfo"></p>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script th:inline="javascript">
+    window.WHEEL_SEGMENTS = /*[[${segments}]]*/ ["Nagroda"];
+    window.CAN_SPIN = /*[[${canSpin}]]*/ true;
+</script>
+<script th:src="@{/js/wheel.js(v='20250613-light')}"></script>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>
