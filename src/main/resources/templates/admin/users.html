@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Panel administratora')}"></head>
+<body class="light-page">
+<header th:replace="~{fragments/layout :: navbar}"></header>
+
+<main id="main">
+    <div class="page-header">
+        <span class="section-kicker"><i class="fa-solid fa-shield-halved"></i> Admin</span>
+        <h1>Panel administratora</h1>
+    </div>
+
+    <div class="alert alert-success" role="status" th:if="${message}" th:text="${message}"></div>
+    <div class="alert alert-error" role="alert" th:if="${error}" th:text="${error}"></div>
+
+    <!-- Aktywne gry (funkcja moderatora) -->
+    <section class="panel" style="margin-bottom:1.4rem;">
+        <h2><i class="fa-solid fa-tower-broadcast"></i> Aktywne gry
+            (<span th:text="${activeSessions != null ? activeSessions.size() : 0}">0</span>)
+            <span class="muted" style="font-size:.85rem;font-weight:400;">· rozegranych meczów łącznie: <span th:text="${totalMatches}">0</span></span>
+        </h2>
+        <div class="list-row" th:each="s : ${activeSessions}">
+            <div class="mini-avatar">🎲</div>
+            <div>
+                <strong th:text="${s.name}">Pokój</strong><br>
+                <span class="muted">kod: </span><span class="code-chip" th:text="${s.code}">ABC123</span>
+                <span class="muted"> · graczy: <span th:text="${s.players.size()}">0</span></span>
+            </div>
+            <div class="spacer"></div>
+            <form th:action="@{/admin/sessions/{id}/end(id=${s.id})}" method="post" class="inline-form"
+                  data-pb-confirm="Zakończyć tę sesję gry?" data-pb-confirm-danger
+                  data-pb-confirm-title="Zakończyć sesję?">
+                <button type="submit" class="btn btn-danger btn-small">
+                    <i class="fa-solid fa-stop"></i> Zakończ sesję
+                </button>
+            </form>
+        </div>
+        <p class="muted" th:if="${activeSessions == null or activeSessions.isEmpty()}">Brak aktywnych gier.</p>
+    </section>
+
+    <!-- Filtry: data rejestracji od + rola (laczone z sortowaniem) -->
+    <form method="get" th:action="@{/admin/users}" class="admin-filter-form"
+          aria-label="Filtrowanie listy uzytkownikow"
+          style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem;">
+        <input type="hidden" name="sort" th:value="${sort}">
+        <input type="hidden" name="dir" th:value="${dir}">
+        <div>
+            <label for="filterDateFrom" style="display:block;font-size:.8rem;font-weight:600;">Zarejestrowani od</label>
+            <input type="date" id="filterDateFrom" name="dateFrom"
+                   th:value="${dateFrom}" aria-label="Data rejestracji od">
+        </div>
+        <div>
+            <label for="filterRole" style="display:block;font-size:.8rem;font-weight:600;">Rola</label>
+            <select id="filterRole" name="role" aria-label="Filtruj po roli">
+                <option value="">Wszyscy</option>
+                <option th:each="r : ${roles}" th:value="${r}" th:text="${r.displayName}"
+                        th:selected="${selectedRole != null and selectedRole == r}">Rola</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-small"><i class="fa-solid fa-filter"></i> Filtruj</button>
+        <a th:href="@{/admin/users}" class="btn btn-secondary btn-small">Wyczysc</a>
+    </form>
+
+    <table th:with="oppDir=${dir == 'asc' ? 'desc' : 'asc'}">
+        <caption>Lista uzytkownikow z sortowaniem (login, data rejestracji, monety), filtrami i edycja danych</caption>
+        <thead>
+        <tr>
+            <th scope="col" th:attr="aria-sort=${sort == 'username' ? (dir == 'asc' ? 'ascending' : 'descending') : 'none'}">
+                <a th:href="@{/admin/users(sort='username', dir=${sort == 'username' ? oppDir : 'asc'}, dateFrom=${dateFrom}, role=${selectedRole})}"
+                   aria-label="Sortuj po loginie">Login
+                    <span th:if="${sort == 'username'}" th:text="${dir == 'asc' ? '▲' : '▼'}">▲</span>
+                </a>
+            </th>
+            <th scope="col">E-mail</th>
+            <th scope="col">Rola</th>
+            <th scope="col">Status</th>
+            <th scope="col" th:attr="aria-sort=${sort == 'createdAt' ? (dir == 'asc' ? 'ascending' : 'descending') : 'none'}">
+                <a th:href="@{/admin/users(sort='createdAt', dir=${sort == 'createdAt' ? oppDir : 'asc'}, dateFrom=${dateFrom}, role=${selectedRole})}"
+                   aria-label="Sortuj po dacie rejestracji">Zarejestrowano
+                    <span th:if="${sort == 'createdAt'}" th:text="${dir == 'asc' ? '▲' : '▼'}">▲</span>
+                </a>
+            </th>
+            <th scope="col" th:attr="aria-sort=${sort == 'coins' ? (dir == 'asc' ? 'ascending' : 'descending') : 'none'}">
+                <a th:href="@{/admin/users(sort='coins', dir=${sort == 'coins' ? oppDir : 'asc'}, dateFrom=${dateFrom}, role=${selectedRole})}"
+                   aria-label="Sortuj po liczbie monet">Monety
+                    <span th:if="${sort == 'coins'}" th:text="${dir == 'asc' ? '▲' : '▼'}">▲</span>
+                </a>
+            </th>
+            <th scope="col">Akcje</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="u : ${users}">
+            <td>
+                <a th:href="@{/u/{u}(u=${u.username})}" target="_blank"
+                   style="font-weight:600;" th:text="${u.username}">login</a>
+            </td>
+            <td th:text="${u.email}">email</td>
+
+            <!-- Zmiana roli -->
+            <td>
+                <form th:action="@{/admin/users/{id}/role(id=${u.id})}" method="post" class="inline-form">
+                    <label class="sr-only" th:for="'role-' + ${u.id}">Rola dla użytkownika</label>
+                    <select th:id="'role-' + ${u.id}" name="role" onchange="this.form.submit()">
+                        <option th:each="r : ${roles}"
+                                th:value="${r}"
+                                th:text="${r.displayName}"
+                                th:selected="${r == u.role}">Rola</option>
+                    </select>
+                </form>
+            </td>
+
+            <!-- Weryfikacja -->
+            <td>
+                <span th:if="${u.verified}" class="badge badge-ok">zweryfikowany</span>
+                <span th:if="${!u.verified and u.verificationDocUrl != null}" class="badge badge-no">oczekuje</span>
+                <span th:if="${!u.verified and u.verificationDocUrl == null}" class="badge badge-no">nie</span>
+                <a th:if="${u.verificationDocUrl != null}"
+                   th:href="@{/admin/users/{id}/legitymacja(id=${u.id})}" target="_blank"
+                   class="btn btn-secondary btn-small" title="Podejrzyj legitymację">
+                    <i class="fa-solid fa-id-card"></i> Legitymacja
+                </a>
+                <form th:action="@{/admin/users/{id}/verify(id=${u.id})}" method="post" class="inline-form">
+                    <input type="hidden" name="verified" th:value="${!u.verified}">
+                    <button type="submit" class="btn btn-secondary btn-small"
+                            th:text="${u.verified} ? 'Cofnij' : 'Zweryfikuj'">Zweryfikuj</button>
+                </form>
+            </td>
+
+            <!-- Data rejestracji -->
+            <td th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'dd.MM.yyyy') : '-'}">01.01.2026</td>
+
+            <!-- Monety -->
+            <td>
+                <div style="font-weight:600;color:#B45309;margin-bottom:.3rem;">
+                    <i class="fa-solid fa-coins"></i> <span th:text="${u.coins}">0</span>
+                </div>
+                <form th:action="@{/admin/users/{id}/add-coins(id=${u.id})}" method="post" class="inline-form"
+                      style="display:flex;gap:.25rem;align-items:center;">
+                    <label class="sr-only" th:for="'coins-' + ${u.id}">Liczba monet</label>
+                    <input th:id="'coins-' + ${u.id}" type="number" name="amount" value="100" step="50"
+                           style="width:80px;padding:4px 6px;" title="Liczba monet (ujemna = odejmij)">
+                    <button type="submit" class="btn btn-small" title="Dodaj monety">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </form>
+            </td>
+
+            <!-- Usuniecie + skrzynka + ekwipunek -->
+            <td style="display:flex;gap:.3rem;flex-wrap:wrap;">
+                <a th:href="@{/admin/users/{id}/edit(id=${u.id})}"
+                   class="btn btn-secondary btn-small" title="Edytuj dane">
+                    <i class="fa-solid fa-pen"></i> Edytuj
+                </a>
+                <a th:href="@{/admin/users/{id}/inventory(id=${u.id})}"
+                   class="btn btn-secondary btn-small" title="Ekwipunek">
+                    <i class="fa-solid fa-toolbox"></i>
+                </a>
+                <form th:action="@{/admin/users/{id}/give-lootbox(id=${u.id})}" method="post" class="inline-form">
+                    <button type="submit" class="btn btn-small" title="Daj skrzynke">
+                        <i class="fa-solid fa-box"></i>
+                    </button>
+                </form>
+                <form th:action="@{/admin/users/{id}/delete(id=${u.id})}" method="post" class="inline-form"
+                      data-pb-confirm="Na pewno usunąć tego użytkownika? Tej operacji nie cofniesz."
+                      data-pb-confirm-danger data-pb-confirm-title="Usunąć konto?">
+                    <button type="submit" class="btn btn-danger btn-small">Usun</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>
