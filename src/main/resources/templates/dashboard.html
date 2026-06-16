@@ -3,94 +3,688 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head('Profil')}"></head>
-<body>
+<body class="light-page"
+      th:classappend="${user.profileBgUrl != null and !#strings.isEmpty(user.profileBgUrl)} ? ' has-profile-bg' : ''">
 <header th:replace="~{fragments/layout :: navbar}"></header>
-<main id="main">
 
-    <div class="glass-panel" style="overflow:hidden;margin-bottom:1.5rem;">
-        <div style="height:140px;background:linear-gradient(135deg,rgba(0,166,81,0.25),rgba(106,27,154,0.35));"></div>
-        <div style="display:flex;align-items:flex-end;gap:1.5rem;padding:0 2rem 1.5rem;flex-wrap:wrap;">
-            <div style="width:110px;height:110px;border-radius:24px;background:var(--gradient-primary);
-                        border:5px solid #eef5f2;display:grid;place-items:center;margin-top:-55px;
-                        font-family:var(--font-display);font-size:2.5rem;font-weight:800;color:#fff;
-                        box-shadow:var(--glow-green);"
-                 th:text="${#strings.toUpperCase(#strings.substring(user.username,0,1))}">P</div>
-            <div style="flex:1;min-width:200px;">
-                <h1 style="margin:0;" th:text="${user.username}">gracz</h1>
-                <p style="margin:.2rem 0 0;color:var(--pb-purple);font-weight:700;font-size:.85rem;
-                          text-transform:uppercase;letter-spacing:.06em;" th:text="${user.role.displayName}">Gracz</p>
+<style>
+/* Tlo calego profilu (styl Steam) — body musi byc przezroczyste, by tlo bylo widoczne */
+body.has-profile-bg.light-page, body.has-profile-bg { background: transparent !important; }
+.profile-bg { position:fixed; inset:0; z-index:-2; background-size:cover; background-position:center center; }
+.profile-bg-overlay { position:fixed; inset:0; z-index:-1;
+    background:linear-gradient(180deg, rgba(238,245,242,.72), rgba(238,245,242,.90)); }
+html.pb-dark .profile-bg-overlay { background:linear-gradient(180deg, rgba(8,12,20,.78), rgba(8,12,20,.92)); }
+</style>
+
+<div th:if="${user.profileBgUrl != null and !#strings.isEmpty(user.profileBgUrl)}"
+     class="profile-bg" th:style="'background-image:url(\'' + ${user.profileBgUrl} + '\')'"></div>
+<div th:if="${user.profileBgUrl != null and !#strings.isEmpty(user.profileBgUrl)}"
+     class="profile-bg-overlay"></div>
+
+<div class="lp-faceit" id="main">
+
+    <div class="alert alert-success" role="status" th:if="${message}" th:text="${message}" style="margin-bottom:16px;"></div>
+    <div class="alert alert-error" role="alert" th:if="${error}" th:text="${error}" style="margin-bottom:16px;"></div>
+    <div class="alert alert-error" role="alert" th:if="${user.suspended}" style="margin-bottom:16px;">
+        <strong>Konto zawieszone.</strong>
+        <span th:if="${user.suspensionReason}" th:text="${user.suspensionReason}">Powod</span>
+        <span th:unless="${user.suspensionReason}">Nie mozesz grac do odwieszenia przez moderatora.</span>
+    </div>
+    <div class="alert alert-error" role="alert" th:if="${!myWarnings.isEmpty()}" style="margin-bottom:16px;">
+        <strong>Ostrzezenie od moderatora:</strong>
+        <span th:text="${myWarnings[0].message}">Tresc</span>
+        <span th:if="${myWarnings.size() > 1}" th:text="' (+' + (${myWarnings.size()} - 1) + ' w historii)'"></span>
+    </div>
+    <div class="alert alert-success" role="status" th:if="${!activeSessions.isEmpty()}" style="margin-bottom:16px;">
+        Twoje pokoje:
+        <a th:each="s : ${activeSessions}"
+           th:href="@{/game/{id}(id=${s.id})}"
+           th:text="${s.name} + ' (' + ${s.code} + ')' + (${s.status.name() == 'WAITING'} ? ' — lobby' : ' — gra')">pokoj</a>
+    </div>
+
+    <!-- PROFILE HEADER -->
+    <div class="lp-ph">
+        <div class="lp-ph-banner">
+            <img th:if="${user.bannerUrl != null and !#strings.isEmpty(user.bannerUrl)}"
+                 th:src="${user.bannerUrl}" alt="Banner profilu" class="lp-ph-banner-img"
+                 onerror="this.style.display='none'">
+        </div>
+        <div class="lp-ph-row">
+            <div class="lp-ph-identity">
+                <div class="lp-ph-avatar profile-avatar-frame"
+                     th:classappend="${equippedFrame != null} ? ' pf-' + ${equippedFrame} : ''">
+                    <img th:if="${user.avatarUrl != null and !#strings.isEmpty(user.avatarUrl)}"
+                         th:src="${user.avatarUrl + (user.avatarUrl.contains('?') ? '&' : '?') + 'v=' + #dates.createNow().time}"
+                         th:attr="data-username=${user.username}"
+                         alt="Awatar" id="profileAvatarImg" class="avatar-img" width="120" height="120" loading="lazy"
+                         onerror="this.onerror=null;this.src='/api/avatar/'+encodeURIComponent(this.dataset.username||'')+'?t='+Date.now();">
+                    <img th:unless="${user.avatarUrl != null and !#strings.isEmpty(user.avatarUrl)}"
+                         th:src="@{/api/avatar/{u}(u=${user.username})}" alt="Awatar"
+                         id="profileAvatarImg" class="avatar-img" width="120" height="120" loading="lazy"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <span style="display:none;font-family:var(--font-display);font-size:48px;font-weight:800;color:#fff;"
+                          th:text="${#strings.toUpperCase(#strings.substring(user.username,0,1))}">G</span>
+                </div>
+                <div class="lp-ph-details">
+                    <h2 th:text="${user.username}">gracz</h2>
+                    <p class="lp-role" th:text="${user.role.displayName}">Rola</p>
+                    <p th:if="${user.bio != null and !#strings.isEmpty(user.bio)}"
+                       style="font-size:.83rem;color:#475569;margin:auto 0 0;max-width:auto;"
+                       th:text="${user.bio}"></p>
+                    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
+                        <span class="level-badge" th:if="${stats != null}">LVL <span th:text="${stats.level}">1</span></span>
+                        <span class="elo-pill" th:if="${stats != null}"><i class="fa-solid fa-bolt"></i> <span th:text="${stats.eloPoints}">1000</span> ELO</span>
+                        <span th:if="${equippedTitleName != null}" class="equipped-title-badge"><i class="fa-solid fa-award"></i> <span th:text="${equippedTitleName}">Tytul</span></span>
+                        <span th:if="${user.verified}" class="badge badge-ok">zweryfikowany</span>
+                    </div>
+                </div>
             </div>
-            <form th:action="@{/logout}" method="post" class="inline-form">
-                <button type="submit" class="btn btn-secondary"><i class="fa-solid fa-arrow-right-from-bracket"></i> Wyloguj</button>
-            </form>
+            <div class="lp-ph-actions">
+                <a th:href="${gameUrl}"
+                   class="lp-btn-play" style="animation:none;font-size:13px;padding:10px 20px;">
+                    <i class="fa-solid fa-play"></i>
+                    <span th:if="${activeSessions.isEmpty()}">Graj teraz</span>
+                    <span th:unless="${activeSessions.isEmpty()}">Wróć do gry</span>
+                </a>
+                <a th:href="@{/settings}" class="lp-btn-outline" style="font-size:13px;padding:9px 16px;">
+                    <i class="fa-solid fa-gear"></i> Ustawienia
+                </a>
+                <a th:if="${isMod}" th:href="@{/moderator}" class="lp-btn-outline" style="font-size:13px;padding:9px 16px;">
+                    <i class="fa-solid fa-shield-halved"></i> Moderacja
+                </a>
+            </div>
         </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr;gap:1.5rem;">
+    <!-- MAIN GRID -->
+    <div class="lp-pg">
+        <!-- SIDEBAR -->
+        <aside class="lp-sidebar">
 
-        <section th:if="${user.profile != null}" class="glass-panel" style="padding:1.75rem;">
-            <p style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--tm);margin:0 0 1.25rem;">
-                Statystyki gracza
-            </p>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">
-                <div style="background:rgba(255,255,255,0.6);border:1px solid var(--glass-border);border-radius:14px;padding:1.4rem;text-align:center;">
-                    <div style="font-family:var(--font-display);font-size:2.2rem;font-weight:800;line-height:1;" th:text="${user.profile.level}">1</div>
-                    <div style="font-size:.72rem;color:var(--tm);margin-top:.4rem;text-transform:uppercase;letter-spacing:.05em;">Poziom</div>
+            <!-- Statystyki -->
+            <div class="lp-stat-panel" th:if="${stats != null}">
+                <div class="lp-s-row">
+                    <span class="lp-s-lbl">ELO</span>
+                    <span class="lp-s-val green" th:text="${stats.eloPoints}">1000</span>
                 </div>
-                <div style="background:rgba(255,255,255,0.6);border:1px solid var(--glass-border);border-radius:14px;padding:1.4rem;text-align:center;">
-                    <div style="font-family:var(--font-display);font-size:2.2rem;font-weight:800;line-height:1;color:var(--pb-green);" th:text="${user.profile.eloPoints}">1000</div>
-                    <div style="font-size:.72rem;color:var(--tm);margin-top:.4rem;text-transform:uppercase;letter-spacing:.05em;">ELO</div>
+                <div class="lp-s-row">
+                    <span class="lp-s-lbl">Mecze</span>
+                    <span class="lp-s-val" th:text="${stats.gamesPlayed}">0</span>
                 </div>
-                <div style="background:rgba(255,255,255,0.6);border:1px solid var(--glass-border);border-radius:14px;padding:1.4rem;text-align:center;">
-                    <div style="font-family:var(--font-display);font-size:2.2rem;font-weight:800;line-height:1;" th:text="${user.profile.gamesWon}">0</div>
-                    <div style="font-size:.72rem;color:var(--tm);margin-top:.4rem;text-transform:uppercase;letter-spacing:.05em;">Wygrane</div>
+                <div class="lp-s-row">
+                    <span class="lp-s-lbl">Win rate</span>
+                    <span class="lp-s-val" th:text="${stats.winRate} + '%'">0%</span>
+                </div>
+                <div class="lp-s-row">
+                    <span class="lp-s-lbl">Seria zwyciestw</span>
+                    <span class="lp-s-val" th:text="${stats.winStreak}">0</span>
+                </div>
+                <div class="lp-s-row">
+                    <span class="lp-s-lbl">Daily streak</span>
+                    <span class="lp-s-val" th:text="${stats.dailyStreak}">0</span>
+                </div>
+                <div class="lp-s-row" th:if="${!matches.isEmpty()}">
+                    <span class="lp-s-lbl">Ostatnia forma</span>
+                    <div class="lp-form-strip">
+                        <div th:each="m, it : ${matches}" th:if="${it.index < 5}"
+                             class="lp-mark"
+                             th:classappend="${m.won} ? ' lp-mark-w' : ' lp-mark-l'"
+                             th:text="${m.won} ? 'W' : 'L'">W</div>
+                    </div>
                 </div>
             </div>
-        </section>
 
-        <section class="glass-panel" style="padding:1.75rem;">
-            <p style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--tm);margin:0 0 1.25rem;">
-                Dane konta
-            </p>
-            <div style="display:flex;flex-direction:column;gap:.6rem;">
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:rgba(255,255,255,0.6);border-radius:10px;">
-                    <span style="color:var(--tm);font-size:.85rem;">Login</span>
-                    <strong th:text="${user.username}">login</strong>
+            <!-- Szybki dostęp -->
+            <div class="lp-mini-panel">
+                <h3>Szybki dostęp</h3>
+                <div class="lp-quick-col">
+                    <button type="button" id="openWheelBtn"
+                            class="lp-q-item"
+                            th:classappend="${canSpin} ? '' : ' quick-card-disabled'"
+                            style="border:none;cursor:pointer;background:rgba(255,255,255,.72);width:100%;text-align:left;">
+                        <div class="lp-q-icon gold"><i class="fa-solid fa-trophy"></i></div>
+                        <div class="lp-q-text">
+                            <strong>Koło Fortuny</strong>
+                            <span th:if="${canSpin}">Możesz zakręcić dziś!</span>
+                            <span th:unless="${canSpin}">Wróć jutro</span>
+                        </div>
+                    </button>
+                    <a th:href="@{/game}" class="lp-q-item">
+                        <div class="lp-q-icon purple"><i class="fa-solid fa-dice"></i></div>
+                        <div class="lp-q-text"><strong>Lobby gry</strong><span>Stwórz pokój lub dołącz</span></div>
+                    </a>
+                    <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/users}" class="lp-q-item">
+                        <div class="lp-q-icon" style="background:rgba(225,29,72,.1);color:#e11d48;"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div class="lp-q-text"><strong>Panel admina</strong><span>Zarządzaj graczami</span></div>
+                    </a>
                 </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:rgba(255,255,255,0.6);border-radius:10px;">
-                    <span style="color:var(--tm);font-size:.85rem;">E-mail</span>
+            </div>
+
+            <!-- Znajomi - sidebar -->
+            <div class="lp-mini-panel">
+                <h3>Znajomi (<span th:text="${friends.size()}">0</span>)</h3>
+                <p class="muted" style="font-size:.72rem;margin:0 0 10px;">
+                    <span class="presence-dot-inline presence-dot-inline--online"></span> online
+                    <span class="presence-dot-inline presence-dot-inline--offline" style="margin-left:.6rem;"></span> offline
+                </p>
+                <div class="lp-friend-row" th:each="f : ${friends}">
+                    <div class="mini-avatar" style="padding:0;overflow:hidden;">
+                        <img th:src="@{/api/avatar/{u}(u=${f.username})}" alt=""
+                             style="width:100%;height:100%;object-fit:cover;display:block;"
+                             th:onerror="'this.style.display=&quot;none&quot;;this.nextElementSibling.style.display=&quot;flex&quot;'">
+                        <span style="display:none;width:100%;height:100%;place-items:center;font-weight:800;font-size:.9rem;"
+                              th:text="${#strings.toUpperCase(#strings.substring(f.username,0,1))}">A</span>
+                    </div>
+                    <div style="flex:1;">
+                        <strong class="player-name-row" style="font-size:.88rem;">
+                        <span class="presence-dot-inline"
+                              th:classappend="${f.online} ? ' presence-dot-inline--online' : ' presence-dot-inline--offline'"
+                              th:title="${f.online} ? 'Online' : 'Offline'"></span>
+                        <span th:text="${f.username}">login</span>
+                    </strong><br>
+                        <span class="muted" style="font-size:.75rem;">LVL <span th:text="${f.level}">1</span> · <span th:text="${f.eloPoints}">1000</span> ELO</span>
+                    </div>
+                    <a th:href="@{/u/{u}(u=${f.username})}" class="lp-btn-outline" style="font-size:11px;padding:5px 10px;">Profil</a>
+                </div>
+                <p class="muted" th:if="${friends.isEmpty()}" style="font-size:.85rem;margin:0;">Brak znajomych.</p>
+                <div th:if="${requests.size() > 0}" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,.06);">
+                    <p style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#475569;margin:0 0 8px;">
+                        Zaproszenia (<span th:text="${requests.size()}">0</span>)
+                    </p>
+                    <div class="lp-friend-row" th:each="r : ${requests}">
+                        <div class="mini-avatar" style="padding:0;overflow:hidden;">
+                            <img th:src="@{/api/avatar/{u}(u=${r.fromUsername})}" alt=""
+                                 style="width:100%;height:100%;object-fit:cover;display:block;"
+                                 th:onerror="'this.style.display=&quot;none&quot;;this.nextElementSibling.style.display=&quot;flex&quot;'">
+                            <span style="display:none;width:100%;height:100%;place-items:center;font-weight:800;font-size:.9rem;"
+                                  th:text="${#strings.toUpperCase(#strings.substring(r.fromUsername,0,1))}">A</span>
+                        </div>
+                        <div style="flex:1;font-size:.85rem;"><strong th:text="${r.fromUsername}">login</strong></div>
+                        <form th:action="@{/friends/{id}/accept(id=${r.friendshipId})}" method="post" class="inline-form">
+                            <input type="hidden" name="from" value="dashboard">
+                            <button type="submit" class="lp-btn-play" style="animation:none;font-size:11px;padding:5px 10px;">OK</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <div class="lp-main">
+
+            <!-- Statystyki boxowe -->
+            <div class="lp-sc" th:if="${stats != null}">
+                <div class="lp-sc-head">
+                    <h3>Statystyki gracza</h3>
                     <span th:text="${user.email}">email</span>
                 </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:rgba(255,255,255,0.6);border-radius:10px;">
-                    <span style="color:var(--tm);font-size:.85rem;">Wiek</span>
-                    <span th:text="${user.age}">18</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:rgba(255,255,255,0.6);border-radius:10px;">
-                    <span style="color:var(--tm);font-size:.85rem;">Rola</span>
-                    <span class="badge"
-                          th:classappend="${user.role.name()=='ADMIN'?'badge-admin':(user.role.name()=='MODERATOR'?'badge-mod':'badge-dim')}"
-                          th:text="${user.role.displayName}">Użytkownik</span>
+                <div class="lp-stat-grid">
+                    <div class="lp-s-box">
+                        <div class="lp-s-big green" th:text="${stats.gamesWon}">0</div>
+                        <div class="lp-s-lbl2">Wygrane</div>
+                    </div>
+                    <div class="lp-s-box">
+                        <div class="lp-s-big" th:text="${stats.gamesPlayed}">0</div>
+                        <div class="lp-s-lbl2">Mecze</div>
+                    </div>
+                    <div class="lp-s-box">
+                        <div class="lp-s-big purple" th:text="${stats.eloPoints}">1000</div>
+                        <div class="lp-s-lbl2">ELO</div>
+                    </div>
+                    <div class="lp-s-box">
+                        <div class="lp-s-big" th:text="${stats.winRate} + '%'">0%</div>
+                        <div class="lp-s-lbl2">Win rate</div>
+                    </div>
+                    <div class="lp-s-box">
+                        <div class="lp-s-big" th:text="${stats.winStreak}">0</div>
+                        <div class="lp-s-lbl2">Seria</div>
+                    </div>
+                    <div class="lp-s-box">
+                        <div class="lp-s-big" th:text="${stats.dailyStreak}">0</div>
+                        <div class="lp-s-lbl2">Daily</div>
+                    </div>
                 </div>
             </div>
-        </section>
 
-        <section sec:authorize="hasRole('ADMIN')" class="glass-panel"
-                 style="padding:1.75rem;background:linear-gradient(135deg,rgba(0,166,81,0.08),rgba(106,27,154,0.08));">
-            <p style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pb-purple);margin:0 0 .6rem;">
-                Panel administratora
-            </p>
-            <p style="font-size:.9rem;color:var(--tm);margin:0 0 1.2rem;">
-                Zarządzaj użytkownikami — dodawaj, edytuj, usuwaj i zmieniaj rangi graczy.
-            </p>
-            <a th:href="@{/users}" class="btn">
-                <i class="fa-solid fa-users-gear"></i> Zarządzaj użytkownikami
-            </a>
-        </section>
+            <!-- Sklep -->
+            <div class="lp-sc" id="shopSection">
+                <div class="lp-sc-head">
+                    <h3><i class="fa-solid fa-store" style="color:#F59E0B;margin-right:.4rem;"></i> Sklep PB</h3>
+                    <span style="display:inline-flex;align-items:center;gap:.35rem;">Monety:
+                        <strong style="color:#B45309;" id="coinsBadge" th:text="${coins}">0</strong>
+                        <i class="fa-solid fa-coins" style="color:#F59E0B;"></i>
+                    </span>
+                </div>
+                <p class="muted" style="margin:.2rem 0 1rem;font-size:.82rem;">
+                    Monety zdobywasz za wygrane mecze. Wydaj je na skrzynki z kosmetykami.
+                </p>
+                <div class="shop-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;">
+                    <div th:each="b : ${shopBoxes}" class="shop-box"
+                         style="border:1px solid rgba(148,163,184,.25);border-radius:14px;padding:1rem;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.5rem;">
+                        <div class="shop-box-icon"
+                             style="width:54px;height:54px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#F59E0B,#B45309);color:#fff;font-size:1.5rem;">
+                            <i th:class="${b.iconClass}"></i>
+                        </div>
+                        <h3 style="margin:.1rem 0 0;font-size:.92rem;" th:text="${b.name}">Skrzynka</h3>
+                        <p class="muted" style="margin:0;font-size:.78rem;min-height:2.2em;" th:text="${b.description}">Opis</p>
+                        <div style="display:inline-flex;align-items:center;gap:.3rem;font-weight:700;color:#B45309;">
+                            <i class="fa-solid fa-coins"></i><span th:text="${b.price}">0</span>
+                        </div>
+                        <button type="button" class="lp-btn-play shop-buy-btn"
+                                style="animation:none;font-size:13px;padding:9px 18px;width:100%;"
+                                th:data-box="${b.key}" th:data-price="${b.price}"
+                                th:disabled="${coins lt b.price}">
+                            <i class="fa-solid fa-box-open"></i> Kup i otwórz
+                        </button>
+                    </div>
+                </div>
+                <div class="lootbox-carousel" id="lootboxCarousel" style="display:none;margin-top:1rem;">
+                    <div class="lootbox-pointer" aria-hidden="true"></div>
+                    <div class="lootbox-strip-mask">
+                        <div id="lootboxStrip" class="lootbox-strip"></div>
+                    </div>
+                </div>
+                <div id="lootboxResult" class="lootbox-result" aria-live="polite"></div>
+            </div>
 
+            <!-- Inwentarz -->
+            <div class="lp-sc inventory-section" id="inventorySection">
+                <div class="lp-sc-head inventory-sc-head">
+                    <div class="inventory-sc-title">
+                        <button type="button" class="inventory-toggle-btn" id="inventoryToggleBtn"
+                                aria-expanded="true" aria-controls="inventoryBody"
+                                title="Zwiń / rozwiń ekwipunek">
+                            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                        </button>
+                        <h3><i class="fa-solid fa-toolbox" style="margin-right:.4rem;color:#6A1B9A;"></i> Ekwipunek</h3>
+                    </div>
+                    <span class="inventory-count"><span id="inventoryCount" th:text="${inventory.size()}">0</span> przedmiotów</span>
+                </div>
+                <div class="inventory-section-body" id="inventoryBody">
+                    <div class="inv-pager-wrap" id="inventoryPagerWrap" hidden>
+                        <button type="button" class="hist-carousel-btn inv-pager-prev" id="inventoryPrev" aria-label="Poprzednia strona przedmiotów">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <span class="inv-pager-label" id="inventoryPagerLabel">1 / 1</span>
+                        <button type="button" class="hist-carousel-btn inv-pager-next" id="inventoryNext" aria-label="Następna strona przedmiotów">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div id="inventoryGrid" class="inventory-grid">
+                        <div th:each="i : ${inventory}" class="inventory-item"
+                             th:classappend="' rarity-' + ${#strings.toLowerCase(i.rarity)} + (${i.equipped} ? ' item-equipped' : '') + (${i.category == 'Naklejka'} ? ' item-cosmetic-only' : '')"
+                             th:style="'border-color:' + ${i.rarityColor}"
+                             th:data-item-id="${i.ownedId}" th:data-category="${i.category}" th:data-slug="${i.slug}">
+                            <div class="inventory-icon" th:style="'color:' + ${i.rarityColor}">
+                                <i th:class="${i.iconClass}"></i>
+                            </div>
+                            <div style="flex:1">
+                                <strong th:text="${i.name}">Item</strong>
+                                <span class="inventory-rarity" th:style="'color:' + ${i.rarityColor}">
+                                    <span th:text="${i.rarityLabel}">Common</span> &middot;
+                                    <span th:text="${i.category}">Awatar</span>
+                                </span>
+                            </div>
+                            <div>
+                                <span th:if="${i.equipped}" class="badge badge-ok" style="font-size:.7rem;"><i class="fa-solid fa-check"></i> Założony</span>
+                                <span th:if="${i.category == 'Karta bonusowa' and i.equipped}" class="muted" style="font-size:.7rem;display:block;margin-top:.2rem;"><i class="fa-solid fa-clock"></i> Do reki na start gry</span>
+                                <button th:if="${i.category != 'Naklejka'}" class="btn btn-small btn-equip"
+                                        th:data-id="${i.ownedId}" th:data-category="${i.category}"
+                                        th:text="${i.equipped} ? 'Zdejmij' : 'Załóż'">Załóż</button>
+                                  <button class="btn btn-small btn-danger btn-delete-item"
+                                          th:data-id="${i.ownedId}" title="Usun przedmiot"
+                                          style="padding:6px 9px;margin-left:4px;background:rgba(239,68,68,.1);color:#EF4444;border-color:rgba(239,68,68,.2);">
+                                      <i class="fa-solid fa-trash-can"></i>
+                                  </button>
+                            </div>
+                        </div>
+                        <p th:if="${inventory.isEmpty()}" class="muted inventory-empty" style="grid-column:1/-1;">
+                            Brak przedmiotów. Wygraj grę i zdobądź pierwszą skrzynkę!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historia meczów -->
+            <div class="lp-sc">
+                <div class="lp-sc-head">
+                    <h3>Historia meczów</h3>
+                    <span>Ostatnie 6</span>
+                </div>
+                <div th:replace="~{fragments/match-carousel :: matchCarousel(${matches})}"></div>
+            </div>
+
+            <div class="lp-sc">
+                <div class="lp-sc-head">
+                    <h3><i class="fa-solid fa-trophy" style="color:var(--brand-gold)"></i> Osiągnięcia</h3>
+                    <span><span th:text="${achievementsUnlocked}">0</span> / <span th:text="${achievementsTotal}">0</span></span>
+                </div>
+                <div class="ach-grid">
+                    <div th:each="a : ${achievements}" class="ach-card"
+                         th:classappend="${a.unlocked} ? ' ach-unlocked' : ' ach-locked'"
+                         th:title="${a.unlocked ? 'Odblokowano' : 'Zablokowane'}">
+                        <div class="ach-icon"><i th:class="${a.iconClass}"></i></div>
+                        <div class="ach-body">
+                            <div class="ach-title" th:text="${a.title}">Tytuł</div>
+                            <div class="ach-desc" th:text="${a.description}">Opis</div>
+                            <div class="ach-reward"><i class="fa-solid fa-coins"></i> +<span th:text="${a.coinReward}">0</span></div>
+                        </div>
+                        <div class="ach-state">
+                            <i th:if="${a.unlocked}" class="fa-solid fa-circle-check"></i>
+                            <i th:unless="${a.unlocked}" class="fa-solid fa-lock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Komentarze pod moim profilem (zarządzanie: odpowiedz / lajk / usuń) -->
+            <div th:replace="~{fragments/comments :: commentsSection(${comments}, false, ${user.username}, ${commentFrom}, true, true)}"></div>
+
+            <!-- Znajdź graczy -->
+            <div class="lp-sc">
+                <a th:href="@{/friends}" class="lp-find-players-card">
+                    <div class="lp-find-players-icon" aria-hidden="true">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <div class="lp-find-players-text">
+                        <strong>Znajdź graczy</strong>
+                        <span>Wyszukaj login i dodaj znajomych</span>
+                    </div>
+                    <i class="fa-solid fa-arrow-right lp-find-players-arrow" aria-hidden="true"></i>
+                </a>
+            </div>
+
+        </div><!-- /lp-main -->
+    </div><!-- /lp-pg -->
+</div><!-- /lp-faceit -->
+
+<!-- POPUP: KOŁO FORTUNY -->
+<div id="wheelModal" class="modal-overlay" aria-modal="true" role="dialog"
+     aria-label="Kolo Fortuny" style="display:none;">
+    <div class="modal-box wheel-modal-box">
+        <button class="modal-close" id="closeWheelModal" aria-label="Zamknij">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h2 class="modal-title"><i class="fa-solid fa-trophy" style="color:var(--brand-gold)"></i> Codzienne Koło Fortuny</h2>
+        <p class="muted" style="text-align:center;margin-top:-.3rem;">Spin raz dziennie!</p>
+        <div class="wheel-container" id="wheelContainer">
+            <div class="wheel-pointer"><i class="fa-solid fa-caret-down"></i></div>
+            <canvas id="wheelCanvas" width="400" height="400"
+                    style="width:400px;max-width:88vw;height:auto;display:block;border-radius:50%;"></canvas>
+        </div>
+        <div id="wheelMessage" class="wheel-message" aria-live="polite"></div>
+        <div style="text-align:center;margin-top:1rem;">
+            <button id="spinBtn" class="btn btn-large btn-wheel-spin" th:disabled="${!canSpin}">
+                <i class="fa-solid fa-rotate"></i>
+                <span th:if="${canSpin}">Zakręć!</span>
+                <span th:unless="${canSpin}">Wróć jutro</span>
+            </button>
+        </div>
     </div>
+</div>
 
-</main>
-<footer th:replace="~{fragments/layout :: footer}"></footer>
+<footer th:replace="~{fragments/layout :: lp-footer}"></footer>
 <script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/match-carousel.js}"></script>
+<script th:src="@{/js/inventory-panel.js}"></script>
+<script th:src="@{/js/shop.js(v='20260615-shop')}"></script>
+<script th:inline="javascript">
+/*<![CDATA[*/
+var WHEEL_SEGMENTS = /*[[${wheelSegments}]]*/ [];
+var CAN_SPIN = /*[[${canSpin}]]*/ false;
+var PROFILE_USERNAME = /*[[${user.username}]]*/ 'gracz';
+/*]]>*/
+</script>
+<script>
+(function () {
+    "use strict";
+    var openBtn = document.getElementById("openWheelBtn");
+    var modal   = document.getElementById("wheelModal");
+    var closeBtn= document.getElementById("closeWheelModal");
+    var spinBtn = document.getElementById("spinBtn");
+    var canvas  = document.getElementById("wheelCanvas");
+    var ctx     = canvas ? canvas.getContext("2d") : null;
+    var msg     = document.getElementById("wheelMessage");
+    /* Pastele PB — jak /wheel */
+    var COLORS  = ["#C8EDD8","#DDD0F5","#C8DCFF","#FFE8C2","#FFD4DE","#C4EDF5","#D0F5E0","#E8DDFA"];
+    var currentRotation = 0, spinning = false;
+
+    function splitLabel(text, maxLen) {
+        var words = String(text||"").split(/\s+/).filter(Boolean);
+        var lines = [], cur = "";
+        words.forEach(function(w){
+            var next = cur ? cur+" "+w : w;
+            if (next.length <= maxLen) cur = next;
+            else { if(cur) lines.push(cur); cur = w.length>maxLen ? w.slice(0,maxLen-1)+"…" : w; }
+        });
+        if (cur) lines.push(cur);
+        return lines.slice(0, 3);
+    }
+
+    function buildWheel() {
+        if (!ctx || !WHEEL_SEGMENTS.length) return;
+        var size = canvas.width, cx = size/2, cy = size/2, r = size/2 - 12;
+        var n = WHEEL_SEGMENTS.length, seg = 2*Math.PI/n;
+        var labelR = r - 28;
+        ctx.clearRect(0,0,size,size);
+        ctx.beginPath(); ctx.arc(cx,cy,r+6,0,2*Math.PI); ctx.fillStyle="#ffffff"; ctx.fill();
+        ctx.strokeStyle="rgba(0,166,81,0.28)"; ctx.lineWidth=5; ctx.stroke();
+        for (var i=0;i<n;i++){
+            var start = -Math.PI/2 + i*seg, end = start+seg;
+            ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,start,end); ctx.closePath();
+            ctx.fillStyle = COLORS[i%COLORS.length]; ctx.fill();
+            ctx.strokeStyle="rgba(255,255,255,0.95)"; ctx.lineWidth=2; ctx.stroke();
+            var raw = WHEEL_SEGMENTS[i]||"";
+            var chord = 2*labelR*Math.sin(seg/2);
+            var maxChars = Math.max(8, Math.floor(chord/7.2));
+            var lines = splitLabel(raw, maxChars);
+            var fs = Math.max(9, Math.min(12, Math.floor(chord*0.11)));
+            if (raw.length>28) fs -= 1;
+            var lineH = fs*1.12;
+            ctx.save();
+            ctx.translate(cx,cy); ctx.rotate(start+seg/2);
+            ctx.textAlign="right"; ctx.textBaseline="middle";
+            ctx.font="700 "+fs+"px 'Plus Jakarta Sans','Segoe UI',sans-serif";
+            var startY = -((lines.length-1)*lineH)/2;
+            for (var li=0; li<lines.length; li++) {
+                ctx.fillStyle="#0f172a";
+                ctx.fillText(lines[li], labelR, startY + li*lineH);
+            }
+            ctx.restore();
+        }
+        ctx.beginPath(); ctx.arc(cx,cy,32,0,2*Math.PI); ctx.fillStyle="#ffffff"; ctx.fill();
+        ctx.strokeStyle="#00A651"; ctx.lineWidth=4; ctx.stroke();
+        var grd = ctx.createLinearGradient(cx-18,cy-18,cx+18,cy+18);
+        grd.addColorStop(0,"#00A651"); grd.addColorStop(1,"#6A1B9A");
+        ctx.fillStyle=grd; ctx.font="800 16px 'Space Grotesk','Segoe UI',sans-serif";
+        ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("PB",cx,cy);
+    }
+    if (openBtn && modal) { buildWheel(); openBtn.addEventListener("click", function(){ modal.style.display="flex"; document.body.style.overflow="hidden"; }); }
+    if (closeBtn) closeBtn.addEventListener("click", function(){ modal.style.display="none"; document.body.style.overflow=""; });
+    modal && modal.addEventListener("click", function(e){ if(e.target===modal){ modal.style.display="none"; document.body.style.overflow=""; } });
+
+    function csrfHeaders() {
+        var t=document.querySelector('meta[name="_csrf"]'), h=document.querySelector('meta[name="_csrf_header"]');
+        var headers={"X-Requested-With":"XMLHttpRequest"};
+        if(t&&h) headers[h.content]=t.content;
+        return headers;
+    }
+    if (spinBtn) spinBtn.addEventListener("click", function(){
+        if(spinning||!CAN_SPIN) return;
+        spinning=true; spinBtn.disabled=true;
+        if(msg) msg.textContent="Kręcenie...";
+        fetch("/wheel/spin",{method:"POST",headers:csrfHeaders()})
+        .then(function(r){return r.json();})
+        .then(function(data){
+            if(!data.spun){
+                spinning=false;
+                if(msg) msg.textContent=data.message||"Dzis juz losowales.";
+                spinBtn.disabled=true;
+                spinBtn.innerHTML='<i class="fa-solid fa-check"></i> Wróć jutro';
+                return;
+            }
+            var n=WHEEL_SEGMENTS.length, deg=360/n;
+            var idx=typeof data.rewardIndex==="number"?data.rewardIndex:0;
+            var segCenter=idx*deg+deg/2;
+            var targetAngle=5*360+(360-segCenter);
+            currentRotation+=targetAngle;
+            if(canvas){
+                canvas.style.transition="transform 4.5s cubic-bezier(0.17,0.67,0.12,0.99)";
+                canvas.style.transform="rotate("+currentRotation+"deg)";
+            }
+            setTimeout(function(){
+                spinning=false; CAN_SPIN=false;
+                if(msg) msg.innerHTML='<span class="wheel-win-label">'+(data.rewardLabel||WHEEL_SEGMENTS[idx]||"Nagroda!")+'</span><br><span class="muted">'+(data.message||"")+'</span>';
+                spinBtn.disabled=true; spinBtn.innerHTML='<i class="fa-solid fa-check"></i> Wróć jutro';
+            },4600);
+        }).catch(function(){ spinning=false; spinBtn.disabled=false; if(msg) msg.textContent="Błąd połączenia."; });
+    });
+
+    (function(){
+        var orig=document.getElementById("lootboxOpenBtn");
+        if(!orig) return;
+        orig.addEventListener("click", function(){
+            var carousel=document.getElementById("lootboxCarousel");
+            if(carousel) carousel.style.display="block";
+        });
+    })();
+
+    function showInventoryToast(text, isError) {
+        var old=document.querySelector(".inventory-toast"); if(old) old.remove();
+        var el=document.createElement("div"); el.className="inventory-toast"+(isError?" error":" success"); el.textContent=text;
+        document.body.appendChild(el); setTimeout(function(){el.remove();},3200);
+    }
+    window.showInventoryToast=showInventoryToast;
+
+    function refreshProfileFrame(itemEl, equipped) {
+        var frame=document.querySelector(".profile-avatar-frame"); if(!frame) return;
+        if(itemEl.getAttribute("data-category")!=="Ramka") return;
+        Array.from(frame.classList).forEach(function(c){ if(c.indexOf("pf-")===0) frame.classList.remove(c); });
+        if(equipped){ var slug=itemEl.getAttribute("data-slug"); if(slug) frame.classList.add("pf-"+slug); }
+    }
+
+    /* Slot wyposazenia: pionek 3D i kolor pionka dziela jeden slot "pawn". */
+    function equipSlotOf(cat){ return (cat==="Pionek 3D"||cat==="Kolor pionka") ? "pawn" : cat; }
+
+    /* Natychmiastowa aktualizacja plakietki tytulu na profilu (bez przeladowania). */
+    function refreshProfileTitle(equipped, itemEl){
+        var existing=document.querySelector(".equipped-title-badge");
+        if(!equipped){ if(existing) existing.remove(); return; }
+        var strong=itemEl.querySelector("strong");
+        var name=strong?strong.textContent:"Tytuł";
+        if(existing){ var s=existing.querySelector("span"); if(s) s.textContent=name; return; }
+        var anchor=document.querySelector(".lp-ph-details .elo-pill")
+                || document.querySelector(".lp-ph-details .level-badge");
+        var container=anchor?anchor.parentElement:null;
+        if(!container) return;
+        var badge=document.createElement("span");
+        badge.className="equipped-title-badge";
+        badge.innerHTML='<i class="fa-solid fa-award"></i> <span></span>';
+        badge.querySelector("span").textContent=name;
+        container.appendChild(badge);
+    }
+
+    document.querySelectorAll('.btn-equip').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+            e.stopPropagation();
+            var id=btn.getAttribute('data-id');
+            fetch('/inventory/'+id+'/equip',{method:'POST',headers:csrfHeaders()})
+            .then(function(r){return r.json().then(function(d){return{ok:r.ok,data:d};});})
+            .then(function(res){
+                if(!res.ok){ showInventoryToast(res.data.error||"Nie udało się.", true); return; }
+                var item=btn.closest('.inventory-item'), equipped=res.data.equipped, cat=btn.getAttribute('data-category')||"";
+                btn.textContent=equipped?'Zdejmij':'Załóż';
+                var badge=item.querySelector('.badge-ok');
+                if(equipped){
+                    item.classList.add('item-equipped');
+                    if(!badge){ var b=document.createElement('span'); b.className='badge badge-ok'; b.style.fontSize='.7rem'; b.innerHTML='<i class="fa-solid fa-check"></i> Założony'; btn.before(b); }
+                    document.querySelectorAll('.inventory-item').forEach(function(o){
+                        if(o===item||equipSlotOf(o.getAttribute('data-category'))!==equipSlotOf(cat)) return;
+                        o.classList.remove('item-equipped');
+                        var ob=o.querySelector('.badge-ok'); if(ob) ob.remove();
+                        var ob2=o.querySelector('.btn-equip'); if(ob2) ob2.textContent='Załóż';
+                    });
+                } else { item.classList.remove('item-equipped'); if(badge) badge.remove(); }
+                if(cat==="Awatar"){ var img=document.getElementById("profileAvatarImg"); if(img) img.src="/api/avatar/"+encodeURIComponent(PROFILE_USERNAME)+"?t="+Date.now(); }
+                if(cat==="Tytul"){ refreshProfileTitle(equipped,item); }
+                refreshProfileFrame(item,equipped);
+                showInventoryToast(res.data.message||(equipped?"Założono.":"Zdjęto."),false);
+            }).catch(function(){ showInventoryToast("Błąd połączenia.",true); });
+        });
+    });
+
+      document.querySelectorAll('.btn-delete-item').forEach(function(btn){
+          btn.addEventListener('click', function(e){
+              e.stopPropagation();
+              var id=btn.getAttribute('data-id');
+              var doDelete=function(){
+                  fetch('/inventory/'+id+'/delete',{method:'POST',headers:csrfHeaders()})
+                  .then(function(r){return r.json().then(function(d){return{ok:r.ok,data:d};});})
+                  .then(function(res){
+                      if(!res.ok){ showInventoryToast(res.data.error||"Nie udalo sie usunac.", true); return; }
+                      var item=btn.closest('.inventory-item');
+                      if(item){
+                          item.remove();
+                          if(window.refreshInventoryPanel) window.refreshInventoryPanel();
+                      }
+                      showInventoryToast(res.data.message||"Usunieto.",false);
+                  }).catch(function(){ showInventoryToast("Blad polaczenia.",true); });
+              };
+              if (typeof pbConfirm === "function") {
+                  pbConfirm({
+                      title: "Usunąć przedmiot?",
+                      message: "Czy na pewno chcesz bezpowrotnie usunąć ten przedmiot?",
+                      confirmText: "Usuń",
+                      danger: true
+                  }).then(function(ok){ if (ok) doDelete(); });
+              } else doDelete();
+          });
+      });
+})();
+
+/* ===== AJAX: zaproszenia znajomych bez przeladowania strony ===== */
+(function(){
+    function csrfHdr(){
+        var t=document.querySelector('meta[name="_csrf"]');
+        var h=document.querySelector('meta[name="_csrf_header"]');
+        var hd={};
+        if(t&&h) hd[h.content]=t.content;
+        return hd;
+    }
+    function ajaxFriendForm(form, btn, successLabel){
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            var fd=new FormData(form);
+            var params=new URLSearchParams();
+            fd.forEach(function(v,k){ params.append(k,v); });
+            var headers=Object.assign({'Content-Type':'application/x-www-form-urlencoded'}, csrfHdr());
+            fetch(form.action, {method:'POST', headers:headers, body:params.toString(), redirect:'manual'})
+            .then(function(){
+                btn.innerHTML=successLabel;
+                btn.disabled=true;
+                btn.style.opacity='0.75';
+            })
+            .catch(function(){ form.submit(); });
+        });
+    }
+    /* Formularze: + Dodaj znajomego */
+    document.querySelectorAll('form[action*="/friends/add"]').forEach(function(form){
+        var btn=form.querySelector('button[type="submit"]');
+        if(btn) ajaxFriendForm(form, btn, '<i class="fa-solid fa-check"></i> Wysłano');
+    });
+    /* Formularze: Akceptuj zaproszenie (OK) */
+    document.querySelectorAll('form[action*="/accept"]').forEach(function(form){
+        var btn=form.querySelector('button[type="submit"]');
+        if(btn) ajaxFriendForm(form, btn, '<i class="fa-solid fa-user-check"></i> Dodano');
+    });
+})();
+</script>
+
+<div id="gameInviteToastHost"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script th:inline="javascript">window.__CURRENT_USER__ = /*[[${#authentication.name}]]*/ '';</script>
+<script th:src="@{/js/game-notifications.js}"></script>
+
 </body>
 </html>
