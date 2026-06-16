@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pl"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : ''}">
+    <title th:text="${title} + ' | Politechnika Monopoly'">Politechnika Monopoly</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+
+<head th:fragment="head-home(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : ''}">
+    <title th:text="${title} + ' | Politechnika Monopoly'">Politechnika Monopoly</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/home-page.css}">
+</head>
+
+<body>
+<header th:fragment="navbar">
+    <a class="skip-link" href="#main">Przejdz do tresci</a>
+    <nav class="navbar" aria-label="Nawigacja glowna">
+        <a class="brand" th:href="@{/}">
+            <span class="brand-logo" aria-hidden="true">P</span>
+            <span class="brand-text">
+                <span class="brand-title">POLITECHNIKA</span>
+                <span class="brand-sub">Monopoly</span>
+            </span>
+        </a>
+
+        <ul class="nav-links">
+            <li><a th:href="@{/}" th:classappend="${activePage == 'home'} ? 'active'">Start</a></li>
+            <li><a th:href="@{/} + '#ranking'">Ranking</a></li>
+            <li sec:authorize="isAuthenticated()">
+                <a th:href="@{/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active'">Profil</a>
+            </li>
+            <li sec:authorize="hasRole('ADMIN')">
+                <a th:href="@{/users}" th:classappend="${activePage == 'users'} ? 'active'">Użytkownicy</a>
+            </li>
+        </ul>
+
+        <div class="nav-auth">
+            <span sec:authorize="isAuthenticated()" class="welcome">
+                <span class="online-dot" aria-hidden="true"></span>
+                <strong sec:authentication="name">login</strong>
+            </span>
+            <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" class="inline-form">
+                <button type="submit" class="btn btn-secondary btn-small">Wyloguj</button>
+            </form>
+            <a sec:authorize="!isAuthenticated()"
+               th:unless="${activePage == 'login'}"
+               th:href="@{/login}" class="btn btn-secondary btn-small">Zaloguj</a>
+            <a sec:authorize="!isAuthenticated()"
+               th:unless="${activePage == 'register'}"
+               th:href="@{/register}" class="btn btn-small">Rejestracja</a>
+        </div>
+
+        <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu mobilne">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="mobile-menu" id="mobile-menu">
+            <a th:href="@{/}">Start</a>
+            <a th:href="@{/} + '#ranking'">Ranking</a>
+            <a sec:authorize="isAuthenticated()" th:href="@{/dashboard}">Profil</a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/users}">Użytkownicy</a>
+            <a sec:authorize="!isAuthenticated()" th:unless="${activePage == 'login'}" th:href="@{/login}">Zaloguj</a>
+            <a sec:authorize="!isAuthenticated()" th:unless="${activePage == 'register'}" th:href="@{/register}">Rejestracja</a>
+        </div>
+    </nav>
+</header>
+
+<footer th:fragment="footer" class="footer">
+    <p>Politechnika Monopoly &middot; Kampus PB &middot;
+        <span th:text="${#dates.year(#dates.createNow())}">2026</span></p>
+</footer>
+</body>
+</html>
