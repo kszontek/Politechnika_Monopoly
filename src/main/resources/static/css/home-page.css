@@ -1,4 +1,53 @@
+:root {
+    --pb-green:        #00A651;
+    --pb-green-light:  #20C96B;
+    --pb-purple:       #6A1B9A;
+    --pb-purple-light: #A855F7;
+    --gradient-primary: linear-gradient(135deg, var(--pb-green), var(--pb-purple));
+    --glow-green:  0 0 30px rgba(0, 166, 81, 0.35);
+    --glass-bg:     rgba(255, 255, 255, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.85);
+    --glass-shadow: 0 10px 40px rgba(0, 166, 81, 0.08);
+    --b:    rgba(15, 23, 42, 0.08);
+    --b2:   rgba(15, 23, 42, 0.14);
+    --t:    #0f172a;
+    --tm:   #475569;
+    --bl:   #3B82F6;
+    --gnd:  rgba(0, 166, 81, 0.12);
+    --r:    10px;
+    --rl:   16px;
+}
+
+body.home-page {
+    background:
+        radial-gradient(1200px 600px at 85% -5%, rgba(106, 27, 154, 0.10), transparent 60%),
+        radial-gradient(1000px 600px at -10% 10%, rgba(0, 166, 81, 0.10), transparent 55%),
+        #eef5f2;
+    background-attachment: fixed;
+    color: var(--t);
+}
+body.home-page h1, body.home-page h2, body.home-page h3 { color: var(--t); }
+
 .home-page main { max-width: none; padding: 0; }
+
+.home-page .text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+}
+
+.home-page .badge-dim { background: rgba(15,23,42,0.06); color: var(--tm); }
+
+.home-page .footer {
+    margin-top: 3rem; padding: 2rem 1.75rem;
+    text-align: center; color: #64748b; font-size: .82rem;
+    border-top: 1px solid var(--b);
+    background: rgba(255,255,255,0.4);
+    backdrop-filter: blur(10px);
+}
+.home-page .footer p { margin: 0; }
+.home-page .lp-social a { color:#64748b; }
+.home-page .lp-social a:hover { color:#fff; }
 
 .hero-section {
     position: relative;

@@ -3,7 +3,7 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head-home('Strona glowna')}"></head>
-<body class="home-page">
+<body class="light-page home-page">
 <header th:replace="~{fragments/layout :: navbar}"></header>
 <main id="main">
 
@@ -22,8 +22,8 @@
                 <p>Symulator ekonomiczny Politechniki Białostockiej. Przejmuj wydziały,
                    wspinaj się w rankingu ELO i pokaż, kto naprawdę rządzi kampusem.</p>
                 <div class="hero-actions">
-                    <a sec:authorize="isAuthenticated()" th:href="@{/dashboard}" class="btn btn-large">
-                        <i class="fa-solid fa-user"></i> Mój profil
+                    <a sec:authorize="isAuthenticated()" th:href="@{/game}" class="btn btn-large">
+                        <i class="fa-solid fa-play"></i> Zagraj teraz
                     </a>
                     <a sec:authorize="!isAuthenticated()" th:href="@{/register}" class="btn btn-large">
                         <i class="fa-solid fa-user-plus"></i> Dołącz do gry
@@ -66,7 +66,7 @@
                         </div>
                         <span class="lw-elo" th:text="${r.eloPoints()} + ' ELO'">1000 ELO</span>
                     </div>
-                    <div class="lw-empty" th:if="${ranking.isEmpty()}">
+                    <div class="lw-empty" th:if="${ranking == null or ranking.isEmpty()}">
                         Brak graczy — bądź pierwszy!
                     </div>
                 </div>
@@ -86,7 +86,7 @@
         <div class="section-inner">
             <p class="section-label">Rozgrywka</p>
             <h2 class="section-title">Dlaczego warto <span class="text-gradient">zagrać?</span></h2>
-            <p class="section-sub">Rozgrywka zaprojektowana pod życie na uczelni — szybkie sesje i bezlitosny Dziekanat.</p>
+            <p class="section-sub">Rozgrywka zaprojektowana pod życie na uczelni — szybkie sesje i strategia bez litości.</p>
             <div class="features-grid">
                 <div class="feat-card">
                     <div class="feat-icon" style="background:rgba(0,166,81,0.12);color:var(--pb-green);"><i class="fa-solid fa-bolt"></i></div>
@@ -161,9 +161,10 @@
                 <h2 class="section-title">Załóż konto<br>i zacznij grać</h2>
                 <p>Zarejestruj się, stwórz profil gracza i rywalizuj o czoło rankingu ELO.</p>
                 <ul class="check-list">
-                    <li>Profil gracza z poziomem i statystykami</li>
-                    <li>Ranking ELO wszystkich graczy kampusu</li>
-                    <li>Panel zarządzania użytkownikami dla administratora</li>
+                    <li>Lobby ze znajomymi i botami (do 4 graczy)</li>
+                    <li>Plansza 3D Kampusu PB i rozgrywka na żywo</li>
+                    <li>Profil gracza z poziomem, ELO i historią meczów</li>
+                    <li>Codzienne Koło Fortuny i skrzynki z nagrodami</li>
                 </ul>
             </div>
             <div class="cta-box">
@@ -176,8 +177,11 @@
                     <a sec:authorize="!isAuthenticated()" th:href="@{/login}" class="btn btn-secondary">
                         Mam już konto
                     </a>
-                    <a sec:authorize="isAuthenticated()" th:href="@{/dashboard}" class="btn">
-                        <i class="fa-solid fa-user"></i> Mój profil
+                    <a sec:authorize="isAuthenticated()" th:href="@{/game}" class="btn">
+                        <i class="fa-solid fa-play"></i> Przejdź do lobby
+                    </a>
+                    <a sec:authorize="isAuthenticated()" th:href="@{/dashboard}" class="btn btn-secondary">
+                        Mój profil
                     </a>
                 </div>
             </div>
@@ -185,7 +189,7 @@
     </section>
 
 </main>
-<footer th:replace="~{fragments/layout :: footer}"></footer>
+<footer th:replace="~{fragments/layout :: lp-footer}"></footer>
 <script th:src="@{/js/app.js}"></script>
 </body>
 </html>
