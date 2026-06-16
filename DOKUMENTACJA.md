@@ -379,34 +379,6 @@ Pozostałe pliki JS: `game-lobby.js`, `game-notifications.js`, `inventory-panel.
 
 ---
 
-## 14. Problemy i rzeczy do naprawy ⚠️
-
-Najważniejsze rzeczy, które zaskoczą nowego programistę:
-
-1. **Profil domyślny = Neon, nie H2.** Patrz §3. Zawsze uruchamiaj z `-Dspring-boot.run.profiles=h2`.
-2. **różnice w bazie na Neon — kolumna `age`.** W `run.log` widać błąd
-   `ERROR: column u1_0.age does not exist`: pole `User.age` jest w kodzie, ale produkcyjna
-   baza Neon nie ma tej kolumny (`ddl-auto=update` nie zawsze dodaje kolumny `NOT NULL`).
-   Na H2 (`create-drop`) problemu nie ma. Przy pracy na Postgresie trzeba wykonać
-   `ALTER TABLE monopoly.users ADD COLUMN age ...` ręcznie (analogicznie jak przy `coins`).
-3. **Podwójne źródło prawdy planszy** — `GameEconomy` (kod) vs tabele `board_*`. Zmiana
-   ekonomii w kodzie nie aktualizuje słowników w bazie. Wybierz jedno źródło docelowo.
-4. **`GamePlayer` ma `FetchType.EAGER`** na 4 kolekcjach — każdy odczyt sesji ładuje
-   tabele pomocnicze. W RAM to bez znaczenia (gra w pamięci), ale dla lobby/historii
-   warto rozważyć LAZY + projekcje.
-5. **Polling + WebSocket równolegle** — `board3d.js` odpytuje stan co kilka sekund jako
-   fallback, nawet gdy WebSocket działa. Można wyłączać polling przy aktywnym połączeniu.
-6. **Martwy/stary kod** — stara plansza 2D (`board.js`, `board-preview.js`), `skrzynka.js`,
-   szablon `game/room.html` bez kontrolera; część encji słownikowych nieczytanych w runtime.
-7. **`README.md` jest nieaktualny** — opisuje „szkielet 20–30%", walutę PLN/`balance`,
-   5 kont i Java 21. Ten plik (`README-NEW.md`) jest źródłem prawdy.
-   wytkniętych braków (RAM, cookies sortowania, klient REST, filtrowanie) została już
-   naprawiona — aktualny stan opisuje `docs/`.
-9. **Testy** — `src/test` zawiera jedynie `ActiveGameStoreTest` i `AchievementServiceTest`;
-   silnik `GameService` nie ma testów integracyjnych (kandydat do uzupełnienia).
-
----
-
 ---
 
 ## 16. Słowniczek pojęć z kodu
