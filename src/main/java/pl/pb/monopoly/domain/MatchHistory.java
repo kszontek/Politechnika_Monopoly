@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+// Wpis w historii meczow - jeden rekord per zakonczona gra danego gracza.
+// Zapisywany dopiero na koniec partii (gra leci w RAM), zasila profil i karuzele "ostatnie mecze".
 @Entity
 @Table(name = "match_history")
 public class MatchHistory {

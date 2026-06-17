@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+// Zaproszenie do pokoju gry - inviter zaprasza invitee do konkretnej sesji.
+// Po akceptacji invitee laduje w lobby; powiadomienie leci na zywo przez UserNotificationService.
 @Entity
 @Table(name = "game_invites")
 public class GameInvite {

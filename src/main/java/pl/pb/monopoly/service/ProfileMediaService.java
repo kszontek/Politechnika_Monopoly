@@ -10,12 +10,16 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+// Zapis plikow profilu na dysk - awatary, banery, tla i dokument weryfikacyjny (legitymacja).
+// Walidujemy typ i rozmiar pliku. UWAGA: media publiczne ida do data/uploads (serwowane przez HTTP),
+// a legitymacja do data/private - osobno, zeby nikt jej nie sciagnal po samym URL.
 @Service
 public class ProfileMediaService {
 
     private static final Path UPLOADS = Path.of("./data/uploads");
 
     private static final Path PRIVATE = Path.of("./data/private");
+    // limity rozmiaru - awatar do 5MB, baner/tlo do 10MB; wiekszych nie przyjmujemy
     private static final long MAX_AVATAR_BYTES = 5L * 1024 * 1024;
     private static final long MAX_BANNER_BYTES = 10L * 1024 * 1024;
 

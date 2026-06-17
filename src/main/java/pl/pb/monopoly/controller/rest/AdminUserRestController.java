@@ -12,6 +12,8 @@ import pl.pb.monopoly.service.UserService;
 import java.time.LocalDate;
 import java.util.List;
 
+// REST-owa wersja listy userow dla admina (te same filtry co w panelu, tylko zwraca JSON).
+// Przydaje sie jak chcemy pobrac userow do tabeli bez przeladowania calej strony.
 @RestController
 @RequestMapping("/api/admin/users")
 public class AdminUserRestController {

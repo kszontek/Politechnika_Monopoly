@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+// Relacja znajomosci - jeden rekord opisuje i zaproszenie, i gotowa znajomosc (rozni je tylko status).
+// requester wyslal, addressee dostal. UniqueConstraint pilnuje, zeby nie bylo dwoch takich samych relacji.
 @Entity
 @Table(name = "friendships",
        uniqueConstraints = @UniqueConstraint(columnNames = {"requester_id", "addressee_id"}))

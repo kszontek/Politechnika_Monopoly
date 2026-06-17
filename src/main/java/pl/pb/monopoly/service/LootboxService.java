@@ -18,9 +18,12 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+// Sklep i skrzynki - katalog kosmetykow (awatary, ramki, pionki, tytuly, karty), kupno za monety
+// i losowanie z uwzglednieniem rzadkosci. Tu jest tez logika "co dostajesz jak otworzysz skrzynke".
 @Service
 public class LootboxService {
 
+    // rzadkosci przedmiotow - weight to szansa (im wiekszy tym czesciej leci), suma niewazna bo losujemy wazona
     public enum Rarity {
         COMMON("Common", "#9ca3af", 60),
         RARE("Rare", "#3b82f6", 25),

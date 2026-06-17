@@ -34,6 +34,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// Panel admina - cala obsluga zakladki /admin (lista userow, edycja, role, monety, sesje gry).
+// Wejscie tu ma tylko ROLE_ADMIN, reszte pilnuje SecurityConfig.
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
@@ -65,8 +67,11 @@ public class AdminController {
         this.gameService = gameService;
     }
 
+    // po czym mozna sortowac liste userow - reszta jest ignorowana zeby nikt nie wstrzyknal czegos w zapytanie
     private static final List<String> SORT_KEYS = List.of("username", "createdAt", "coins");
 
+    // glowna tabela userow - sortowanie i filtry. Zapamietujemy wybor sortowania w cookie,
+    // zeby po wejsciu drugi raz bylo tak jak admin zostawil.
     @GetMapping("/users")
     public String users(@RequestParam(required = false) String sort,
                         @RequestParam(required = false) String dir,
@@ -78,11 +83,13 @@ public class AdminController {
                         HttpServletResponse response,
                         Model model) {
 
+        // jak nie przyszlo nic w URL to bierzemy z cookie, a jak i tego nie ma to domyslnie po nazwie
         String effSort = sort != null ? sort : (sortCookie != null ? sortCookie : "username");
         String effDir = dir != null ? dir : (dirCookie != null ? dirCookie : "asc");
         if (!SORT_KEYS.contains(effSort)) effSort = "username";
         if (!"asc".equalsIgnoreCase(effDir) && !"desc".equalsIgnoreCase(effDir)) effDir = "asc";
 
+        // zapisujemy wybor tylko jak admin faktycznie kliknal sortowanie (czyli przyszlo w parametrze)
         if (sort != null) writeCookie(response, "adminUserSort", effSort);
         if (dir != null) writeCookie(response, "adminUserDir", effDir);
 
@@ -97,6 +104,7 @@ public class AdminController {
         return "admin/users";
     }
 
+    // maly helper do zapisu cookie - httpOnly zeby js sie do tego nie dobral, trzymamy 30 dni
     private void writeCookie(HttpServletResponse response, String name, String value) {
         Cookie cookie = new Cookie(name, value);
         cookie.setMaxAge(30 * 24 * 60 * 60);
@@ -143,6 +151,7 @@ public class AdminController {
         }
     }
 
+    // awaryjne ubicie sesji gry - przydaje sie jak ktos zostawil pokoj i wisi w nieskonczonosc
     @PostMapping("/sessions/{id}/end")
     public String endSession(@PathVariable Long id, RedirectAttributes redirectAttributes) {
 
@@ -252,6 +261,7 @@ public class AdminController {
         return "redirect:/admin/users";
     }
 
+    // doladowanie/odjecie monet z reki admina - amount moze byc ujemny, wtedy zabieramy
     @PostMapping("/users/{id}/add-coins")
     public String addCoins(@PathVariable Long id,
                            @RequestParam int amount,
@@ -265,6 +275,7 @@ public class AdminController {
         return "redirect:/admin/users";
     }
 
+    // podglad legitymacji wgranej przez usera (weryfikacja konta) - tylko admin tu wchodzi
     @GetMapping("/users/{id}/legitymacja")
     public ResponseEntity<Resource> viewLegitymacja(@PathVariable Long id) {
         User user = userService.getById(id);
@@ -274,6 +285,7 @@ public class AdminController {
         }
         Path file = profileMediaService.resolveUpload(rel);
 
+        // pilnujemy zeby ktos nie podsunal sciezki typu ../../ i nie wyciagnal cudzych plikow
         Path base = profileMediaService.resolveUpload("verification");
         if (!file.startsWith(base) || !Files.isReadable(file)) {
             return ResponseEntity.notFound().build();

@@ -12,15 +12,20 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+// Codzienne Kolo Fortuny - raz dziennie kazdy moze zakrecic i wylosowac nagrode.
+// Wynik losuje serwer (front tylko animuje), a date ostatniego zakrecenia trzymamy w statystykach gracza.
 @Service
 public class WheelService {
 
+    // pojedyncze pole kola: etykieta na froncie + co tak naprawde dajemy
     private record WheelSlot(String label, WheelRewardType type) {}
 
+    // typy nagrod: karta na reke, skrzynka albo dodatkowa kasa na start nastepnej gry
     private enum WheelRewardType {
         CARD, LOOTBOX, START_CASH
     }
 
+    // wszystkie pola kola - kolejnosc musi sie zgadzac z grafika na froncie
     private static final List<WheelSlot> SLOTS = List.of(
             new WheelSlot(HandCardType.SKIP_RENT.label, WheelRewardType.CARD),
             new WheelSlot(HandCardType.EXTRA_ROLL.label, WheelRewardType.CARD),
@@ -53,6 +58,7 @@ public class WheelService {
         return SLOTS.size();
     }
 
+    // mozna krecic jak jeszcze dzis sie nie kreclo (porownujemy date ostatniego losu z dzisiejsza)
     @Transactional(readOnly = true)
     public boolean canSpinToday(String username) {
         User user = userRepository.findByUsername(username).orElseThrow();
@@ -75,6 +81,7 @@ public class WheelService {
                     "Dzis juz losowales. Wroc jutro po kolejna nagrode!");
         }
 
+        // streak: jak kreclo sie wczoraj to seria rosnie, jak byla przerwa to liczymy od nowa
         if (today.minusDays(1).equals(s.getLastSpinDate())) {
             s.setDailyStreak(s.getDailyStreak() + 1);
         } else {

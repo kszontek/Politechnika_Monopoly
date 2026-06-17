@@ -1,5 +1,7 @@
 package pl.pb.monopoly.domain;
 
+// Katalog osiagniec - kazde ma tytul, opis, nagrode w monetach i ikone. Prog odblokowania
+// (ile gier/wygranych/seria) sprawdza metoda isUnlocked nizej, a przyznaje je AchievementService.
 public enum AchievementType {
 
     FIRST_GAME("Debiut", "Rozegraj swoj pierwszy mecz", 100, "fa-solid fa-flag-checkered"),

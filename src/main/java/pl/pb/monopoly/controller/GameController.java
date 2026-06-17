@@ -19,6 +19,8 @@ import pl.pb.monopoly.util.PublicUrlHelper;
 
 import java.util.List;
 
+// Widoki gry (nie REST) - lobby/matchmaking, tworzenie i dolaczanie do pokoju oraz sama plansza.
+// Logika rozgrywki siedzi w GameService, tu tylko routing stron i przygotowanie modelu pod Thymeleaf.
 @Controller
 @RequestMapping("/game")
 public class GameController {
@@ -40,6 +42,8 @@ public class GameController {
         this.ownedItemRepository = ownedItemRepository;
     }
 
+    // glowny ekran /game - albo hub matchmakingu, albo lobby jak juz jestem w pokoju.
+    // tu sie decyduje co pokazac: czekajacy pokoj (WAITING) vs trwajaca gra (ACTIVE)
     @GetMapping
     public String lobby(Authentication auth, Model model, HttpServletRequest request) {
         String me = auth.getName();
@@ -101,6 +105,8 @@ public class GameController {
         }
     }
 
+    // wejscie na sama plansze. Wpuszczamy tylko jak faktycznie gram w tej sesji i nie jestem bankrutem,
+    // a gra jest w trakcie (ACTIVE) - inaczej wracamy do lobby.
     @GetMapping("/{id}")
     public String game(@PathVariable Long id, Authentication auth, Model model) {
         GameSession session = gameService.getSession(id);

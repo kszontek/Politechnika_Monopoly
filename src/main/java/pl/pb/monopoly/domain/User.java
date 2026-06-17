@@ -7,6 +7,8 @@ import pl.pb.monopoly.validation.MinimumAge;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+// Konto uzytkownika - centralna encja. Adnotacje walidacyjne (@NotBlank, @Size, @MinimumAge)
+// pilnuja danych juz na formularzu rejestracji. coins to waluta konta (nie mylic z "siano" w grze).
 @Entity
 @Table(name = "users")
 public class User {
@@ -15,6 +17,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // login: 3-20 znakow, tylko male litery i cyfry; musi byc unikalny
     @NotBlank(message = "Login jest wymagany")
     @Size(min = 3, max = 20, message = "Login musi miec od 3 do 20 znakow")
     @Pattern(regexp = "^[a-z0-9]+$", message = "Login: tylko male litery i cyfry")
@@ -38,16 +41,19 @@ public class User {
     @Column(name = "last_name", length = 50)
     private String lastName;
 
+    // gra od 18 lat - wlasna adnotacja @MinimumAge liczy wiek z daty urodzenia
     @NotNull(message = "Data urodzenia jest wymagana")
     @Past(message = "Data urodzenia nie moze byc w przyszlosci")
     @MinimumAge(18)
     @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
 
+    // monety konta (sklep, nagrody) - startowo 1000, nigdy ponizej zera
     @Min(value = 0, message = "Liczba monet nie moze byc ujemna")
     @Column(nullable = false)
     private int coins = 1000;
 
+    // weryfikacja konta legitymacja - verified ustawia admin/mod po obejrzeniu wgranego dokumentu
     @Column(nullable = false)
     private boolean verified = false;
 

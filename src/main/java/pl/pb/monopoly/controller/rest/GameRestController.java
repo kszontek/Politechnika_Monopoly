@@ -11,6 +11,8 @@ import pl.pb.monopoly.service.GameService;
 import java.util.List;
 import java.util.Map;
 
+// REST gry pod /api/game - to z tym gada plansza (board3d.js): rzut kostka, kupno, czynsz, karty, przelewy itd.
+// Schemat wszedzie ten sam: wolamy GameService, a bledy logiki (IllegalArgumentException) zamieniamy na 400 z {"error": ...}.
 @RestController
 @RequestMapping("/api/game")
 public class GameRestController {
@@ -21,6 +23,7 @@ public class GameRestController {
         this.gameService = gameService;
     }
 
+    // aktualny stan gry - front odpytuje to po kazdej akcji i po powiadomieniu z WebSocketa
     @GetMapping("/{id}/state")
     public GameStateDto state(@PathVariable Long id, Authentication auth) {
         return gameService.getState(id, auth.getName());

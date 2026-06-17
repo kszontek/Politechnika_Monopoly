@@ -8,6 +8,7 @@ import pl.pb.monopoly.service.UserService;
 
 import java.util.List;
 
+// Maly REST oddajacy top graczy do rankingu - uzywany na stronie glownej do wyswietlenia listy najlepszych.
 @RestController
 @RequestMapping("/api")
 public class RankingRestController {

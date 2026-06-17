@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+// Polubienie komentarza - kto (user) polubil ktory komentarz. UniqueConstraint pilnuje, zeby jeden user
+// nie polajkowal tego samego komentarza dwa razy (lajk to toggle: jest albo go nie ma).
 @Entity
 @Table(name = "profile_comment_likes",
         uniqueConstraints = @UniqueConstraint(name = "uk_pc_like_comment_user",

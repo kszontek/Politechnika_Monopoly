@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// Strona glowna (/) z rankingiem i dashboard gracza (/dashboard).
+// Dashboard zbiera w jedno miejsce wszystko o userze: staty, osiagniecia, znajomych, sklep, ekwipunek itd.
 @Controller
 public class HomeController {
 
@@ -97,6 +99,8 @@ public class HomeController {
                             Model model) {
 
         User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
+        // przy wejsciu na dashboard od razu dajemy ew. dzienna skrzynke i sprawdzamy nowe osiagniecia,
+        // potem pobieramy usera jeszcze raz zeby zlapac swiezo przyznane rzeczy
         lootboxService.grantDailyIfNeeded(user.getUsername());
         achievementService.checkAndAward(user.getId());
         user = userRepository.findByUsername(authentication.getName()).orElseThrow();

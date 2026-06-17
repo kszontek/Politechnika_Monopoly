@@ -1,5 +1,7 @@
 package pl.pb.monopoly.domain;
 
+// 10 kart specjalnych "na reke" - gracz zbiera je (np. z Kola Fortuny/skrzynek) i zagrywa kiedy chce.
+// Kazda ma etykiete, opis dzialania i ikone (Font Awesome) do wyswietlenia w panelu kart.
 public enum HandCardType {
 
     SKIP_RENT("Karta Ochrony", "Pomin oplate czynszu — zanim rzucisz kostka gwarantuje Ci bezplatne przejscie przez wrogie pole.", "fa-solid fa-shield"),

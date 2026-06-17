@@ -28,9 +28,13 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+// Silnik calej gry - serce projektu. Tworzenie/dolaczanie do pokoju, start meczu, rzut kostka,
+// kupowanie pol, czynsze, karty, bankructwa i warunki wygranej. To tu jest najwiecej logiki.
+// Plansza ma 40 pol (ponizej TILES) z klimatem PB - akademiki, wydzialy, kurorty, dziekanat itd.
 @Service
 public class GameService {
 
+    // nazwy wszystkich 40 pol planszy "Kampus PB" - indeks = pozycja na planszy
     public static final String[] TILES = {
             "START — Inauguracja semestru",
             "Akademik Alfa",
@@ -706,6 +710,8 @@ public class GameService {
     }
 
     @Transactional
+    // rzut kostka - najwazniejsza akcja w turze. Lockujemy sesje, zeby dwoch graczy/botow
+    // nie ruszylo plansza naraz (stan gry siedzi w pamieci, wiec trzeba pilnowac watkow).
     public GameStateDto roll(Long sessionId, String username) {
         return withLock(sessionId, () -> rollInternal(sessionId, username));
     }
@@ -714,6 +720,7 @@ public class GameService {
         GameSession session = getSession(sessionId);
         requireParticipant(session, username);
         requireActiveGame(session);
+        // nie pozwalamy rzucac, jak wisi jakas niezalatwiona decyzja (kupno, czynsz, ulepszenie, wykup)
         if (session.getPendingPurchasePos() != null) {
             throw new IllegalArgumentException("Najpierw zakoncz decyzje o polu (kup lub pomin).");
         }
@@ -733,6 +740,7 @@ public class GameService {
 
         normalizeCurrentTurn(session);
         GamePlayer current = players.get(session.getCurrentTurn() % players.size());
+        // tylko gracz, ktorego jest tura, moze rzucic - reszta dostaje odmowe
         if (current.getUser() == null || !current.getUser().getUsername().equals(username)) {
             throw new IllegalArgumentException("To nie Twoja tura! Czekaj na ruch innego gracza.");
         }
@@ -1777,6 +1785,9 @@ public class GameService {
         }
     }
 
+    // sprawdzenie warunkow konca gry po kazdym ruchu. Wygrac mozna na kilka sposobow:
+    // uplynal czas 60 min (wygrywa najbogatszy), 3 monopole kolorystyczne, 4 kurorty,
+    // albo zostal tylko jeden niezbankrutowany gracz (sprawdzane nizej).
     private void checkGameEnd(GameSession session, StringBuilder msg) {
         if (session.getStatus() == GameStatus.FINISHED) return;
         if (session.getStatus() == GameStatus.WAITING) return;

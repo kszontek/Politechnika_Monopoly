@@ -17,6 +17,8 @@ import pl.pb.monopoly.repository.UserRepository;
 
 import java.time.LocalDateTime;
 
+// Komentarze pod profilem publicznym (/u/{username}) - dodawanie, edycja, usuwanie,
+// lajki i odpowiedz wlasciciela. Zasada: jedna osoba = jeden komentarz pod danym profilem.
 @Controller
 public class ProfileCommentController {
 
@@ -57,6 +59,7 @@ public class ProfileCommentController {
             ra.addFlashAttribute("commentError", "Komentarz nie moze byc pusty.");
             return "redirect:" + back;
         }
+        // jeden komentarz na profil - jak juz jest, to user ma go edytowac, a nie dodawac kolejny
         if (commentRepository.findByAuthorIdAndTargetId(author.getId(), target.getId()).isPresent()) {
             ra.addFlashAttribute("commentError", "Masz juz komentarz pod tym profilem — edytuj go lub usun.");
             return "redirect:" + back;
@@ -158,6 +161,7 @@ public class ProfileCommentController {
             return "redirect:/login";
         }
         String back = safeBack(from, "/u/" + c.getTarget().getUsername());
+        // toggle lajka - jak juz polubilem to cofamy, jak nie to dodajemy
         likeRepository.findByCommentIdAndUserId(c.getId(), me.getId())
                 .ifPresentOrElse(
                         likeRepository::delete,
@@ -165,6 +169,7 @@ public class ProfileCommentController {
         return "redirect:" + back;
     }
 
+    // komentarz moze skasowac autor, wlasciciel profilu albo admin/mod
     private boolean canManage(User me, ProfileComment c) {
         boolean isAuthor = c.getAuthor().getId().equals(me.getId());
         boolean isOwner = c.getTarget().getId().equals(me.getId());
@@ -177,6 +182,7 @@ public class ProfileCommentController {
         return t.length() > 500 ? t.substring(0, 500) : t;
     }
 
+    // zabezpieczenie przed open-redirect - wracamy tylko na wlasne sciezki ("/cos"), nie na "//obcydomena"
     private static String safeBack(String from, String fallback) {
         if (from != null && from.startsWith("/") && !from.startsWith("//")) {
             return from;

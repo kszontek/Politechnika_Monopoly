@@ -12,9 +12,13 @@ import pl.pb.monopoly.service.LootboxService;
 
 import java.util.Map;
 
+// Serwuje awatar gracza pod /api/avatar/{username}.
+// Jak user ma wgrany wlasny obrazek to go proxujemy, a jak nie - generujemy z DiceBear
+// (styl zalezy od zalozonego awatara ze skrzynek).
 @RestController
 public class AvatarController {
 
+    // mapowanie naszych skinow awatara na style DiceBeara
     private static final Map<String, String> AVATAR_STYLE = Map.of(
             "avatar-student", "pixel-art",
             "avatar-zmeczony", "bottts-neutral",
@@ -47,6 +51,7 @@ public class AvatarController {
         try {
             var userOpt = userRepository.findByUsername(username);
 
+            // 1) jak user wgral wlasny awatar - sciagamy go i oddajemy dalej (proxy)
             if (userOpt.isPresent()) {
                 String customUrl = userOpt.get().getAvatarUrl();
                 if (customUrl != null && !customUrl.isBlank()) {
@@ -83,6 +88,7 @@ public class AvatarController {
                 }
             }
 
+            // 2) brak wlasnego - generujemy SVG z DiceBear na podstawie loginu jako "ziarna"
             byte[] svg = restClient.get()
                     .uri("https://api.dicebear.com/9.x/{style}/svg?seed={seed}" +
                          "&backgroundColor=1e293b&radius=50", style, seed)

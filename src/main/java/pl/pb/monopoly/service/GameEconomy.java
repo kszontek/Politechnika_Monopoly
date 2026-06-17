@@ -5,11 +5,15 @@ import pl.pb.monopoly.domain.GamePlayer;
 import java.util.Map;
 import java.util.Set;
 
+// Wszystkie liczby i zasady ekonomii gry w jednym miejscu - ceny pol, czynsze, bonusy, koszty.
+// Klasa czysto narzedziowa (statyczna, bez stanu), zeby GameService nie byl zasypany magic numberami.
 public final class GameEconomy {
 
     private GameEconomy() {
+        // nie tworzymy instancji - same statyczne stale i metody pomocnicze
     }
 
+    // kasa "w grze" (siano) - kazdy startuje z 2 mln, za przejscie przez START +300k, kaucja z dziekanatu 200k
     public static final int STARTING_CASH = 2_000_000;
     public static final int GO_BONUS = 300_000;
     public static final int JAIL_BAIL = 200_000;
@@ -27,10 +31,12 @@ public final class GameEconomy {
 
     public static final int GAME_DURATION_SECONDS = 60 * 60;
 
+    // poziom konta liczony z ELO - np. 1000 ELO daje LVL 4, 2000 ELO daje LVL 10
     public static int levelForElo(int elo) {
         return Math.max(1, (elo * 6) / 1000 - 2);
     }
 
+    // majatek gracza = gotowka + wartosc posiadanych pol z domkami; uzywane do "kto wygrywa po czasie"
     public static int netWorth(GamePlayer p) {
         if (p == null) return 0;
         return p.getCash() + computePropertyNetWorth(p.getOwnedPositions(), p.getPropertyLevels());
@@ -44,6 +50,7 @@ public final class GameEconomy {
     public static final int POS_JAIL = 10;
     public static final int POS_GO_TO_JAIL = 30;
 
+    // grupy kolorystyczne pol - skompletowanie calej grupy daje monopol (wyzszy czynsz, mozna budowac)
     public static final int[][] COLOR_GROUPS = {
             {1, 3},
             {6, 8, 9},

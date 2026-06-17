@@ -13,6 +13,8 @@ import pl.pb.monopoly.repository.UserRepository;
 
 import java.util.List;
 
+// Logika znajomych - zaproszenia, akceptacja, usuwanie i szukanie graczy.
+// Jedna relacja (Friendship) opisuje i zaproszenie i gotowa znajomosc, tylko status sie zmienia.
 @Service
 public class FriendService {
 
@@ -28,6 +30,7 @@ public class FriendService {
         this.presenceService = presenceService;
     }
 
+    // skrot zeby nie pisac za kazdym razem findByUsername(...).orElseThrow()
     private User user(String username) {
         return userRepository.findByUsername(username).orElseThrow();
     }
@@ -42,6 +45,7 @@ public class FriendService {
         return s != null ? s.getEloPoints() : 0;
     }
 
+    // lista moich znajomych - bierzemy relacje ze statusem ACCEPTED, gdzie jestem requesterem ALBO adresatem
     @Transactional(readOnly = true)
     public List<FriendDto> friendsOf(String username) {
         User me = user(username);
@@ -50,6 +54,7 @@ public class FriendService {
                         FriendStatus.ACCEPTED, me.getId(),
                         FriendStatus.ACCEPTED, me.getId());
         return rels.stream().map(f -> {
+            // ja moge byc po dowolnej stronie relacji, wiec "znajomy" to ten drugi
             User other = f.getRequester().getId().equals(me.getId()) ? f.getAddressee() : f.getRequester();
             return new FriendDto(f.getId(), other.getId(), other.getUsername(),
                     levelOf(other), eloOf(other), presenceService.isOnline(other.getUsername()));
@@ -87,6 +92,7 @@ public class FriendService {
             throw new IllegalArgumentException("Nie mozesz dodac samego siebie");
         }
 
+        // sprawdzamy w obie strony, zeby nie dalo sie zaprosic kogos kto juz nas zaprosil (czy juz jest znajomym)
         boolean exists = friendshipRepository.existsByRequesterIdAndAddresseeId(from.getId(), to.getId())
                 || friendshipRepository.existsByRequesterIdAndAddresseeId(to.getId(), from.getId());
         if (exists) {
@@ -99,6 +105,7 @@ public class FriendService {
     public void accept(Long friendshipId, String username) {
         Friendship f = friendshipRepository.findById(friendshipId)
                 .orElseThrow(() -> new IllegalArgumentException("Brak zaproszenia"));
+        // tylko adresat moze przyjac zaproszenie - requester nie zaakceptuje sam sobie
         if (!f.getAddressee().getUsername().equals(username)) {
             throw new IllegalArgumentException("To nie Twoje zaproszenie");
         }

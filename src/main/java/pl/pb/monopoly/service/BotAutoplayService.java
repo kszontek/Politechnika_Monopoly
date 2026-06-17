@@ -19,15 +19,21 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+// Boty - graja same za siebie i pilnuja, zeby gra sie nie zawiesila.
+// Dwie role: (1) jak jest tura bota to rzuca i podejmuje decyzje, (2) watchdog - jak czlowiek
+// za dlugo nie reaguje na decyzje, to bot mu ja "domyka" timeoutem, zeby reszta nie czekala w nieskonczonosc.
+// Wszystko leci na osobnym schedulerze z opoznieniami, zeby ruchy botow wygladaly naturalnie a nie natychmiast.
 @Service
 public class BotAutoplayService {
 
     private static final Logger log = LoggerFactory.getLogger(BotAutoplayService.class);
 
+    // opoznienia ruchow bota - zeby nie strzelal akcji w te same milisekunde, tylko "myslal" chwile
     private static final long BOT_ROLL_DELAY_MS = 1500;
 
     private static final long BOT_DECISION_DELAY_MS = 4200;
 
+    // po tylu sekundach bezczynnosci czlowieka watchdog sam podejmuje za niego decyzje
     private static final long HUMAN_DECISION_TIMEOUT_SECONDS = 25;
 
     private static final long HUMAN_PAYMENT_TIMEOUT_SECONDS = 30;

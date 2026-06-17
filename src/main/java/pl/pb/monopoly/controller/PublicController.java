@@ -11,6 +11,8 @@ import pl.pb.monopoly.repository.UserRepository;
 import pl.pb.monopoly.service.ProfileCommentService;
 import pl.pb.monopoly.service.UserPresenceService;
 
+// Publiczny profil gracza pod /u/{username} - wizytowka jak na Steamie (staty, historia meczow, komentarze).
+// Wchodzi tu kazdy (tez niezalogowany), tylko opcje pod komentarzem zalezne sa od tego kto oglada.
 @Controller
 public class PublicController {
 
@@ -47,6 +49,7 @@ public class PublicController {
         model.addAttribute("comments", profileCommentService.commentsFor(user, viewer));
         model.addAttribute("commentTargetUsername", user.getUsername());
         model.addAttribute("commentFrom", "/u/" + user.getUsername());
+        // komentowac mozna tylko cudzy profil, bedac zalogowanym i jak sie jeszcze nie komentowalo
         boolean ownProfile = viewer != null && viewer.getId().equals(user.getId());
         boolean alreadyCommented = viewer != null
                 && profileCommentService.hasCommented(viewer.getId(), user.getId());

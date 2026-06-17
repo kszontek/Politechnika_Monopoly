@@ -11,6 +11,8 @@ import pl.pb.monopoly.repository.ProfileCommentRepository;
 
 import java.util.List;
 
+// Czytanie komentarzy pod profilem - sam zapis robi ProfileCommentController, tu skladamy DTO pod widok.
+// Wazne: tutaj wyliczamy uprawnienia (kto moze edytowac/usuwac/odpowiadac), zeby front tylko je wyswietlal.
 @Service
 public class ProfileCommentService {
 
@@ -35,6 +37,7 @@ public class ProfileCommentService {
                 .toList();
     }
 
+    // przepisanie encji na DTO + doliczenie lajkow i flag uprawnien zaleznych od tego kto oglada
     private ProfileCommentDto toDto(ProfileComment c, Long viewerId, boolean isOwner, boolean canModerate) {
         boolean mine = viewerId != null && c.getAuthor().getId().equals(viewerId);
         boolean likedByMe = viewerId != null

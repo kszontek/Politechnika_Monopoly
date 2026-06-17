@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Min;
 
 import java.time.LocalDate;
 
+// Statystyki gracza - to co widac na profilu i dashboardzie: rozegrane/wygrane gry, poziom, ELO, serie.
+// Trzyma tez stan Kola Fortuny (data ostatniego losu, streak) i ew. nagrody czekajace na nastepna gre.
 @Entity
 @Table(name = "player_statistics")
 public class PlayerStatistics {
@@ -25,6 +27,7 @@ public class PlayerStatistics {
     @Column(nullable = false)
     private int level = 1;
 
+    // ranking ELO - startowo 1000, z niego liczymy tez poziom konta (patrz GameEconomy.levelForElo)
     @Min(0)
     @Column(name = "elo_points", nullable = false)
     private int eloPoints = 1000;

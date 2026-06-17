@@ -7,8 +7,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+// Mapowanie skinow pionkow ze sklepu na konkretne pliki modeli 3D (.glb) na planszy.
+// Klasa narzedziowa (statyczna) - laczy "pawn-3d-creeper" z plikiem, ktory laduje board3d.js.
 public final class PawnModelCatalog {
 
+    // slug przedmiotu -> nazwa pliku .glb w /static/models
     private static final Map<String, String> SLUG_TO_FILE = Map.ofEntries(
             Map.entry("pawn-3d-corn", "CornPawn.glb"),
             Map.entry("pawn-3d-steve", "PawnSteve.glb"),

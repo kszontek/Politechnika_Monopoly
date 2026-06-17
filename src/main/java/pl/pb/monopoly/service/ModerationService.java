@@ -11,6 +11,8 @@ import pl.pb.monopoly.repository.UserWarningRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+// Logika moderacji - ostrzezenia, zawieszanie kont i sprawdzanie czy ktos w ogole moze grac.
+// Pilnuje tez hierarchii: mod nie ruszy admina ani samego siebie.
 @Service
 public class ModerationService {
 
@@ -22,11 +24,13 @@ public class ModerationService {
         this.userWarningRepository = userWarningRepository;
     }
 
+    // czy user jest zawieszony - przy okazji "samo-odwiesza" konto, jak minal termin bana czasowego
     @Transactional
     public boolean isUserSuspended(User user) {
         if (user == null || !user.isSuspended()) {
             return false;
         }
+        // ban czasowy juz wygasl -> czyscimy flagi i traktujemy jako odwieszonego
         if (user.getSuspendedUntil() != null && user.getSuspendedUntil().isBefore(LocalDateTime.now())) {
             user.setSuspended(false);
             user.setSuspendedUntil(null);

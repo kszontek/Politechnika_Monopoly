@@ -1,5 +1,6 @@
 package pl.pb.monopoly.domain;
 
+// Rodzaje pol z kartami na planszy (klasyczne Monopoly: Szansa, Kasa miejska + nasze Wydarzenia).
 public enum CardType {
     SZANSA("Szansa"),
     KASA_MIEJSKA("Kasa miejska"),

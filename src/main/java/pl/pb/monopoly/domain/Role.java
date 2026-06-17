@@ -1,5 +1,6 @@
 package pl.pb.monopoly.domain;
 
+// Role kont - na ich podstawie Spring Security wpuszcza/blokuje dostep (authority() daje "ROLE_...").
 public enum Role {
 
     ADMIN("Administrator"),

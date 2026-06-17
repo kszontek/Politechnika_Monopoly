@@ -16,6 +16,8 @@ import pl.pb.monopoly.repository.UserWarningRepository;
 
 import java.util.List;
 
+// Kasowanie konta - trzeba recznie posprzatac wszystkie powiazania (osiagniecia, znajomi, komentarze,
+// ekwipunek, historia itd.), bo inaczej zostalyby "sieroty" i baza rzucilaby bledem klucza obcego.
 @Service
 public class UserAccountDeletionService {
 

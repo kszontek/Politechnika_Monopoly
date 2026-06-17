@@ -12,6 +12,7 @@ import pl.pb.monopoly.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
 
+// Osiagniecia - sprawdza progi (rozegrane gry, wygrane, seria) i przyznaje nowe odznaki + monety za nie.
 @Service
 public class AchievementService {
 
@@ -23,6 +24,8 @@ public class AchievementService {
         this.userRepository = userRepository;
     }
 
+    // lecimy po wszystkich typach osiagniec i dajemy te, ktore user wlasnie odblokowal a jeszcze ich nie ma.
+    // wolane np. przy wejsciu na dashboard, wiec musi pomijac juz przyznane (existsBy...).
     @Transactional
     public List<AchievementType> checkAndAward(Long userId) {
         if (userId == null) return List.of();

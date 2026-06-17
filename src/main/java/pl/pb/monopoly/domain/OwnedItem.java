@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 @Table(name = "owned_items", indexes = {
         @Index(name = "idx_owned_user", columnList = "user_id")
 })
+// Przedmiot w ekwipunku gracza (to co wypadlo ze skrzynek). Sam opis przedmiotu (nazwa, rzadkosc, ikona)
+// trzyma katalog w LootboxService - tu jest tylko slug, wlasciciel i czy aktualnie zalozony.
 public class OwnedItem {
 
     @Id
@@ -18,6 +20,7 @@ public class OwnedItem {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    // slug = identyfikator przedmiotu z katalogu, np. "frame-gold", "pawn-3d-creeper"
     @Column(name = "item_slug", nullable = false, length = 60)
     private String itemSlug;
 

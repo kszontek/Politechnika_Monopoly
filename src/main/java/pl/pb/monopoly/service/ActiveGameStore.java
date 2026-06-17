@@ -8,10 +8,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
+// Trzyma aktywne rozgrywki w PAMIECI (RAM), nie w bazie - dzieki temu ruchy sa szybkie,
+// a do bazy zapisujemy dopiero wynik na koncu meczu. Kazda sesja ma swoj lock,
+// zeby gracze i boty nie modyfikowali tej samej gry naraz (gra jest wielowatkowa).
 @Component
 public class ActiveGameStore {
 
+    // id sesji -> stan gry; ConcurrentHashMap bo wchodzi tu wiele watkow naraz
     private final Map<Long, GameSession> sessions = new ConcurrentHashMap<>();
+    // osobny zamek na kazda sesje - blokujemy tylko jedna gre, nie wszystkie naraz
     private final Map<Long, ReentrantLock> locks = new ConcurrentHashMap<>();
 
     public boolean contains(Long sessionId) {

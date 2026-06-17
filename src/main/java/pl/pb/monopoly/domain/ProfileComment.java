@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
+// Komentarz pod profilem - author pisze na profilu target. UniqueConstraint(author+target) wymusza
+// na poziomie bazy zasade "jeden komentarz na profil". reply/replyAt to odpowiedz wlasciciela profilu.
 @Entity
 @Table(name = "profile_comments",
         uniqueConstraints = @UniqueConstraint(name = "uk_profile_comment_author_target",
@@ -35,6 +37,7 @@ public class ProfileComment {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // odpowiedz wlasciciela profilu pod komentarzem (null = brak odpowiedzi)
     @Size(max = 500)
     @Column(name = "reply", length = 500)
     private String reply;

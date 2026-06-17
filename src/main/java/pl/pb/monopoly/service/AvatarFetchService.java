@@ -11,6 +11,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.nio.charset.StandardCharsets;
 import java.net.URLEncoder;
 
+// Klient REST do DiceBeara - przy rejestracji sprawdza, czy da sie wygenerowac domyslny awatar dla loginu.
+// To nasz "klient zewnetrznego API" z wymagan projektu (wolanie obcego serwisu przez RestTemplate).
 @Service
 public class AvatarFetchService {
 
@@ -23,6 +25,7 @@ public class AvatarFetchService {
         this.restTemplate = restTemplate;
     }
 
+    // zwraca URL awatara, jak DiceBear odpowie poprawnie; jak cos sie wywali to null (nie blokujemy rejestracji)
     public String fetchAvatarUrl(String seed) {
         if (seed == null || seed.isBlank()) return null;
         String url = UriComponentsBuilder.fromHttpUrl(DICEBEAR)

@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+// Gracz w konkretnej partii (nie mylic z User - to "pionek" w danej grze).
+// user moze byc null, bo botow nie ma w tabeli userow. Tu siedzi cash, pozycja, posiadlosci i karty na reke.
 @Entity
 @Table(name = "game_players")
 public class GamePlayer {
@@ -21,6 +23,7 @@ public class GamePlayer {
     @JoinColumn(name = "session_id", nullable = false)
     private GameSession session;
 
+    // null = bot (bot nie ma konta), inaczej powiazanie z realnym uzytkownikiem
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -28,8 +31,8 @@ public class GamePlayer {
     @Column(nullable = false, length = 30)
     private String displayName;
 
+    // "siano" w grze - kazdy startuje z 2 mln PLN
     @Column(nullable = false)
-
     private int cash = 2_000_000;
 
     @Column(nullable = false)

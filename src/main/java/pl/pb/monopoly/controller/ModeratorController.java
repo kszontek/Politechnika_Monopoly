@@ -28,6 +28,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+// Panel moderatora - lzejsza wersja admina. Mod moze ostrzegac, zawieszac, weryfikowac konta
+// i ubijac sesje, ale nie grzebie w monetach/rolach (to zostaje adminowi).
 @Controller
 @RequestMapping("/moderator")
 public class ModeratorController {
@@ -64,6 +66,7 @@ public class ModeratorController {
             return ResponseEntity.notFound().build();
         }
         Path file = profileMediaService.resolveUpload(rel);
+        // to samo zabezpieczenie co u admina - plik musi siedziec w folderze verification, zadnych ../
         Path base = profileMediaService.resolveUpload("verification");
         if (!file.startsWith(base) || !Files.isReadable(file)) {
             return ResponseEntity.notFound().build();
@@ -111,6 +114,7 @@ public class ModeratorController {
         return "redirect:/moderator";
     }
 
+    // zawieszenie - days=0 znaczy na stale (przekazujemy null do serwisu), wiekszy od 0 to ban czasowy
     @PostMapping("/users/{id}/suspend")
     public String suspend(@PathVariable Long id,
                           @RequestParam String reason,

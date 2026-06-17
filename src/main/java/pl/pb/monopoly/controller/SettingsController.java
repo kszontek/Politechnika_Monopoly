@@ -17,6 +17,8 @@ import pl.pb.monopoly.service.ProfileMediaService;
 import pl.pb.monopoly.service.UserService;
 import pl.pb.monopoly.util.PublicUrlHelper;
 
+// Ustawienia konta - edycja profilu (mail, bio, awatar/baner/tlo), zmiana hasla i wyslanie legitymacji do weryfikacji.
+// Media mozna albo wkleic linkiem, albo wgrac plik - wtedy zapis idzie przez ProfileMediaService.
 @Controller
 @RequestMapping("/settings")
 public class SettingsController {
@@ -71,6 +73,7 @@ public class SettingsController {
             String resolvedBackgroundUrl;
             String publicBase = resolvePublicBaseUrl(request);
 
+            // dla kazdego media: jak user wgral plik to zapisujemy go, a jak nie to bierzemy wklejony link
             if (avatarFile != null && !avatarFile.isEmpty()) {
                 resolvedAvatarUrl = profileMediaService.saveAvatar(user.getUsername(), avatarFile, publicBase);
             } else {
@@ -138,6 +141,7 @@ public class SettingsController {
                                  @RequestParam String newPassword,
                                  @RequestParam String confirmPassword,
                                  RedirectAttributes ra) {
+        // szybki check po stronie serwera - czy dwa razy wpisane nowe haslo sie zgadza
         if (!newPassword.equals(confirmPassword)) {
             ra.addFlashAttribute("error", "Nowe hasła nie są takie same.");
             return "redirect:/settings";

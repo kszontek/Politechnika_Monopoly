@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+// Jedna partia gry - pokoj z kodem, statusem (WAITING/ACTIVE/FINISHED), tura i lista graczy.
+// Mnostwo pol "pending..." trzyma decyzje zawieszone w trakcie tury (kup pole, zaplac czynsz,
+// ulepsz, wykup dzialke) - czekamy az gracz kliknie, zanim ruszymy dalej.
 @Entity
 @Table(name = "game_sessions")
 public class GameSession {
@@ -14,6 +17,7 @@ public class GameSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // code - krotki kod pokoju, ktory podaje sie kolegom zeby dolaczyc
     @Column(nullable = false, unique = true, length = 8)
     private String code;
 

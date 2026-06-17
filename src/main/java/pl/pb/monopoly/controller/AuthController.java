@@ -11,6 +11,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import pl.pb.monopoly.dto.RegistrationForm;
 import pl.pb.monopoly.service.UserService;
 
+// Logowanie i rejestracja - sam ekran logowania obsluguje Spring Security,
+// my tu tylko pokazujemy strony i ogarniamy zakladanie konta.
 @Controller
 public class AuthController {
 
@@ -36,6 +38,7 @@ public class AuthController {
                            BindingResult bindingResult,
                            RedirectAttributes redirectAttributes) {
 
+        // login i mail musza byc unikalne - sprawdzamy dopiero jak pole samo w sobie jest poprawne
         if (!bindingResult.hasFieldErrors("username") && userService.usernameTaken(form.getUsername())) {
             bindingResult.rejectValue("username", "taken", "Ten login jest juz zajety");
         }

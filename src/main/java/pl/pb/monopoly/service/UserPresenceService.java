@@ -6,9 +6,12 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+// Kto jest online - liczymy aktywne polaczenia WebSocket per user (kropka "online" przy znajomych/profilu).
+// Jeden user moze miec kilka kart/urzadzen, dlatego trzymamy zbior sesji - online jest dopoki ma chocby jedna.
 @Service
 public class UserPresenceService {
 
+    // mapy w obie strony: sesja -> login oraz login -> jego sesje
     private final ConcurrentMap<String, String> sessionToUser = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Set<String>> userSessions = new ConcurrentHashMap<>();
 
@@ -39,6 +42,7 @@ public class UserPresenceService {
         }
     }
 
+    // online = ma chociaz jedna aktywna sesje WebSocket
     public boolean isOnline(String username) {
         if (username == null || username.isBlank()) {
             return false;

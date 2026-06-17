@@ -17,6 +17,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+// Obsluga kont uzytkownikow - rejestracja, edycja profilu, hasla, role, ranking i lista dla admina.
+// Hasla zawsze przez passwordEncoder (BCrypt) - nigdzie nie trzymamy ich jawnie.
 @Service
 public class UserService {
 
@@ -42,6 +44,7 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
+    // zakladanie nowego konta - swiezy user dostaje role USER i 1000 monet na start
     @Transactional
     public User register(RegistrationForm form) {
         User user = new User();
@@ -50,10 +53,11 @@ public class UserService {
         user.setFirstName(form.getFirstName());
         user.setLastName(form.getLastName());
         user.setDateOfBirth(form.getDateOfBirth());
-        user.setPassword(passwordEncoder.encode(form.getPassword()));
+        user.setPassword(passwordEncoder.encode(form.getPassword())); // BCrypt, nigdy plain text
         user.setRole(Role.USER);
         user.setCoins(1000);
 
+        // jak nie ma awatara, dociagamy domyslny z DiceBeara na podstawie loginu
         if (user.getAvatarUrl() == null || user.getAvatarUrl().isBlank()) {
             String avatar = avatarFetchService.fetchAvatarUrl(user.getUsername());
             if (avatar != null) {

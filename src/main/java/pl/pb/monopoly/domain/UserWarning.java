@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+// Ostrzezenie wystawione przez moderatora - kto dostal (user), kto wystawil (moderator), tresc i kiedy.
+// Historia ostrzezen pokazuje sie userowi na dashboardzie i moderatorowi w panelu.
 @Entity
 @Table(name = "user_warnings")
 public class UserWarning {

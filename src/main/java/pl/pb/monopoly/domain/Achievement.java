@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+// Odblokowane osiagniecie konkretnego usera. UniqueConstraint(user+code) gwarantuje, ze danej odznaki
+// nie da sie przyznac dwa razy. Definicje progow i nagrod siedza w enumie AchievementType.
 @Entity
 @Table(name = "player_achievements",
         uniqueConstraints = @UniqueConstraint(name = "uk_achievement_user_code",

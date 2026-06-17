@@ -12,6 +12,8 @@ import pl.pb.monopoly.service.FriendService;
 import java.util.List;
 import java.util.Map;
 
+// Strona znajomych (/friends) - cala logika siedzi w FriendService, tu tylko routing.
+// Endpointy sa w dwoch wersjach: zwykle (formularz + redirect) oraz /api (JSON) do dodawania bez przeladowania.
 @Controller
 @RequestMapping("/friends")
 public class FriendsController {
@@ -22,6 +24,7 @@ public class FriendsController {
         this.friendService = friendService;
     }
 
+    // widok znajomych - lista, oczekujace zaproszenia i wyniki wyszukiwania (jak ktos wpisal "q")
     @GetMapping
     public String friends(@RequestParam(value = "q", required = false) String query,
                           Authentication auth, Model model) {

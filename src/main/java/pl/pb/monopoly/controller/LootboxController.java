@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// REST od skrzynek i ekwipunku - kupno skrzynki w sklepie, otwieranie, zakladanie i kasowanie przedmiotow.
+// Zwraca JSON, animacje karuzeli (ta "ruletka" przy losowaniu) robi front na podstawie pola "strip".
 @RestController
 public class LootboxController {
 
@@ -33,6 +35,7 @@ public class LootboxController {
         this.ownedItemRepository = ownedItemRepository;
     }
 
+    // kupno skrzynki za monety - logika placenia i losowania jest w serwisie, tu pakujemy odpowiedz dla frontu
     @PostMapping("/shop/buy/{box}")
     public ResponseEntity<?> buyBox(@PathVariable String box, Authentication auth) {
         try {
@@ -92,7 +95,8 @@ public class LootboxController {
         String slot = LootboxService.equipSlot(category);
         boolean willEquip = !item.isEquipped();
         if (willEquip) {
-
+            // w jednym slocie (np. ramka, pionek) moze byc tylko jeden zalozony przedmiot,
+            // wiec przy zakladaniu zdejmujemy poprzedni z tego samego slotu
             ownedItemRepository.findByUserIdOrderByObtainedAtDesc(user.getId()).stream()
                     .filter(o -> !o.getId().equals(id))
                     .filter(o -> {
